@@ -289,6 +289,8 @@ class Server extends EventEmitter {
         )
 
         connections[id].apiId = apiId
+        connections[id].subscriptionStartedAt = Date.now()
+        connections[id].lastLiveTradeAt = null
 
         socketService.syncMarkets()
       })
@@ -370,7 +372,10 @@ class Server extends EventEmitter {
         return {
           market,
           connected: !!connection.apiId,
-          subscriptionState: !connection.apiId ? 'disconnected' : connection.timestamp ? 'trade_observed' : 'requested',
+          subscriptionState: !connection.apiId ? 'disconnected' : connection.lastLiveTradeAt
+            ? 'trade_observed' : 'requested',
+          subscriptionStartedAt: connection.subscriptionStartedAt || null,
+          lastLiveTradeAt: connection.lastLiveTradeAt || null,
           lastTrade: connection.timestamp || null,
           lastPing: connection.ping || null,
           intervals: this.journal ? this.journal.quality(market, 20) : []
@@ -846,6 +851,10 @@ class Server extends EventEmitter {
         // ping connection
         if (!connections[identifier]) continue
         connections[identifier].hit++
+
+        if (source && connections[identifier].apiId) {
+          connections[identifier].lastLiveTradeAt = Date.now()
+        }
 
         if (trade.timestamp > connections[identifier].timestamp) {
           connections[identifier].timestamp = trade.timestamp
