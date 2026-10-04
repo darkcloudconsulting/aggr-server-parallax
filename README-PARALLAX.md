@@ -8,12 +8,15 @@ to make corrections deterministic and restart-safe.
 
 The deployment manifest is [`deploy/kubernetes.yaml`](deploy/kubernetes.yaml).
 It creates only new named volumes, deployments, and services in
-`ai-bot-feeder`, pinned to cordoned `snow-node-200`. Provisioning is scripted in
-[`deploy/provision-node200.sh`](deploy/provision-node200.sh). Do not run that
-script again on an initialized disk; it deliberately refuses an existing pool.
+`ai-bot-feeder`, pinned to cordoned `snow-node-200`. The current partitioned
+disk layout, effective quotas, and Kubernetes capacity mismatch are recorded
+in the [node-200 storage record](docs/NODE200_STORAGE_2026-10-05.md). The
+original whole-disk [`provision-node200.sh`](deploy/provision-node200.sh) is
+retired and must not be used for the current layout.
 
 The current market matrix, exclusions, data semantics, database choice, and
 release gate are in [`docs/RELEASE_STATUS.md`](docs/RELEASE_STATUS.md).
+The active 24-hour stability run is defined in [`deploy/soak.yaml`](deploy/soak.yaml).
 The [data catalog](docs/DATA_CATALOG.md) lists all 66 market IDs, bar fields,
 InfluxDB retention policies, and the Snowgraf data source. The
 [dedicated feed dashboard](http://192.168.10.208:32161/d/aggr-parallax-feed/aggr-parallax-e28094-btc-eth-sol-feed)

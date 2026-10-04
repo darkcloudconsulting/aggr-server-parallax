@@ -2,6 +2,9 @@ apiVersion: v1
 kind: PersistentVolume
 metadata:
   name: aggr-parallax-influx-node200
+# Launch-time PV/PVC sizes below still match live Kubernetes declarations.
+# Current ZFS quotas are 420 GiB Influx and 100 GiB journal; see
+# docs/NODE200_STORAGE_2026-10-05.md before changing bound claims.
 spec:
   capacity: { storage: 350Gi }
   volumeMode: Filesystem
