@@ -89,3 +89,15 @@ test('second-resolution recovery does not overwrite a precise live timestamp', (
     assert.equal(f.journal.health().unresolved[0].reason, 'coarse_recovery_timestamp')
   } finally { f.close() }
 })
+
+test('a late execution keeps a bucket dirty after an older write completes', () => {
+  const f = fixture()
+  try {
+    f.journal.append([trade('first', 1000, 100)], 'live')
+    const writing = f.journal.pending()
+    f.journal.append([trade('late', 2000, 101)], 'recovery')
+    f.journal.markWritten(writing)
+    assert.equal(f.journal.pending().length, 1)
+    assert.equal(f.journal.bar('OKEX:BTC-USDT', writing[0].bucket).vbuy, 201)
+  } finally { f.close() }
+})

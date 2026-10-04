@@ -49,7 +49,8 @@ class Journal {
       native_quantity=@native_quantity, native_unit=@native_unit, source=@source
       WHERE event_key=@event_key`)
     this.dirty = this.db.prepare(`INSERT INTO dirty_buckets VALUES (?, ?, ?)
-      ON CONFLICT(market, bucket) DO UPDATE SET updated_at=excluded.updated_at`)
+      ON CONFLICT(market, bucket) DO UPDATE SET
+        updated_at=MAX(dirty_buckets.updated_at + 1, excluded.updated_at)`)
     this.issue = this.db.prepare(`INSERT INTO unresolved VALUES (?, ?, ?, ?, ?)
       ON CONFLICT(market, bucket, reason) DO UPDATE SET last_seen=excluded.last_seen`)
     this.feedState = this.db.prepare(`INSERT INTO feed_state VALUES (?, ?, ?, 1, ?)
@@ -116,7 +117,7 @@ class Journal {
   }
 
   pending(limit = 120, before = Date.now() - 30000) {
-    return this.db.prepare(`SELECT market, bucket FROM dirty_buckets
+    return this.db.prepare(`SELECT market, bucket, updated_at FROM dirty_buckets
       WHERE bucket < ? ORDER BY bucket, market LIMIT ?`).all(before, limit)
   }
 
@@ -143,8 +144,10 @@ class Journal {
   }
 
   markWritten(entries) {
-    const remove = this.db.prepare('DELETE FROM dirty_buckets WHERE market=? AND bucket=?')
-    this.db.transaction(() => { for (const entry of entries) remove.run(entry.market, entry.bucket) })()
+    const remove = this.db.prepare('DELETE FROM dirty_buckets WHERE market=? AND bucket=? AND updated_at=?')
+    this.db.transaction(() => {
+      for (const entry of entries) remove.run(entry.market, entry.bucket, entry.updated_at)
+    })()
   }
 
   recordIssue(market, bucket, reason) {
