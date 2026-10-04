@@ -15,7 +15,7 @@ const repoNames = Object.fromEntries(config.exchanges.map(name => {
 }))
 const sql = 'const D=require("better-sqlite3");const d=new D("/var/lib/aggr-journal/events.sqlite",{readonly:true});' +
   'console.log(JSON.stringify(d.prepare("SELECT native_id,event_time,price,size,side,executions FROM events ' +
-  'WHERE market=? AND event_time>? AND event_time<? AND liquidation=0").all(process.argv[1],+process.argv[2],+process.argv[3])));d.close()'
+  'WHERE market=? AND event_time>=? AND event_time<? AND liquidation=0").all(process.argv[1],+process.argv[2],+process.argv[3])));d.close()'
 
 function localTrades(market, from, to) {
   const output = execFileSync('kubectl', ['-n', 'ai-bot-feeder', 'exec', 'deployment/aggr-server-parallax',
@@ -58,7 +58,8 @@ async function main() {
       const exchange = instances[venue] ||= new (require(`../src/exchanges/${repoNames[venue]}`))()
       if (!exchange.products) await exchange.getProducts(true)
       if (typeof exchange.getMissingTrades !== 'function') throw new Error('No native recovery method')
-      const to = Date.now() - Number(process.env.PARALLAX_RECONCILE_LAG_MS || 13000)
+      let to = Date.now() - Number(process.env.PARALLAX_RECONCILE_LAG_MS || 13000)
+      if (venue === 'BITSTAMP') to = Math.floor(to / 1000) * 1000
       const from = to - Number(process.env.PARALLAX_RECONCILE_WINDOW_MS || 5000)
       row.from = from
       row.to = to
@@ -67,7 +68,8 @@ async function main() {
       const range = { pair, from, to }
       try { await exchange.getMissingTrades(range) }
       catch (error) { row.recoveryError = error.message }
-      Object.assign(row, compare(localTrades(market, from, to), native))
+      Object.assign(row, compare(localTrades(market, from, to),
+        native.filter(trade => trade.timestamp >= from && trade.timestamp < to)))
       if (row.recoveryError && row.status === 'MATCH') row.status = 'MATCH_WITH_RECOVERY_LIMIT'
     } catch (error) {
       row.status = 'ERROR'

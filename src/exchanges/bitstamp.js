@@ -91,12 +91,14 @@ class Bitstamp extends Exchange {
     })
     if (!Array.isArray(response.data)) throw new Error('Bitstamp transactions response invalid')
     const page = response.data
-    const trades = page.filter(trade => +trade.date * 1000 > range.from && +trade.date * 1000 < range.to)
+    const trades = page.filter(trade => +trade.date * 1000 >= range.from - 1000 && +trade.date * 1000 < range.to)
       .map(trade => ({ exchange: this.id, pair: range.pair, id: trade.tid,
         nativeQuantity: trade.amount, nativeUnit: 'base', timestamp: +trade.date * 1000,
-        price: +trade.price, size: +trade.amount, side: String(trade.type) === '0' ? 'buy' : 'sell' }))
+        timestampPrecision: 's', price: +trade.price, size: +trade.amount,
+        side: String(trade.type) === '0' ? 'buy' : 'sell' }))
     if (trades.length) this.emitTrades(null, trades)
-    if (page.length === 1000 && Math.min(...page.map(trade => +trade.date * 1000)) > range.from + 1000) {
+    if (range.from < Date.now() - 24 * 3600000 ||
+      (page.length >= 1000 && Math.min(...page.map(trade => +trade.date * 1000)) > range.from + 1000)) {
       throw new Error('Bitstamp recent transactions do not cover the full recovery interval')
     }
     range.from = range.to

@@ -192,7 +192,8 @@ class Bybit extends Exchange {
       .get(endpoint)
       .then(response => {
         if (response.data.result.list.length) {
-          const trades = response.data.result.list
+          const page = response.data.result.list
+          const trades = page
             .filter(trade => trade.time > range.from && trade.time <= range.to)
             .map(trade => this.formatTrade({
               i: trade.execId,
@@ -226,6 +227,9 @@ class Bybit extends Exchange {
               `[${this.id}.recoverMissingTrades] +${trades.length} ${range.pair}`
             )
           }
+          if (page.length === limit && Math.min(...page.map(trade => +trade.time)) > range.from) {
+            throw new Error('Bybit recent trades do not cover the full recovery interval')
+          }
         }
 
         return totalRecovered
@@ -236,7 +240,7 @@ class Bybit extends Exchange {
           err.message
         )
 
-        return totalRecovered
+        throw err
       })
   }
 

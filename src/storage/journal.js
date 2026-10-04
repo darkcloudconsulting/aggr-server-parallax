@@ -91,8 +91,11 @@ class Journal {
         if (this.insert.run(row).changes) {
           this.dirty.run(market, bucket, now)
           this.feedState.run(market, Number(trade.timestamp), now, weak ? 1 : 0)
+          if (source === 'recovery' && trade.timestampPrecision === 's') {
+            this.issue.run(market, bucket, 'coarse_recovery_timestamp', now, now)
+          }
           accepted.push(trade)
-        } else if (source === 'recovery' && !weak) {
+        } else if (source === 'recovery' && !weak && trade.timestampPrecision !== 's') {
           const prior = this.existing.get(eventKey)
           if (prior && (prior.event_time !== row.event_time || prior.price !== row.price ||
             prior.size !== row.size || prior.side !== row.side ||

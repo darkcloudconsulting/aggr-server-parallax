@@ -75,3 +75,17 @@ test('native recovery replaces an aggregated execution and inserts its missing m
     assert.equal(f.journal.db.prepare('SELECT size FROM events WHERE native_id=?').get('12').size, 1)
   } finally { f.close() }
 })
+
+test('second-resolution recovery does not overwrite a precise live timestamp', () => {
+  const f = fixture()
+  try {
+    const live = trade('same', 1456, 100)
+    f.journal.append([live], 'live')
+    f.journal.append([{ ...live, timestamp: live.timestamp - 456,
+      timestampPrecision: 's' }, { ...live, id: 'new', timestamp: live.timestamp - 456,
+      timestampPrecision: 's' }], 'recovery')
+    const stored = f.journal.db.prepare('SELECT event_time FROM events WHERE native_id=?').get('same')
+    assert.equal(stored.event_time, live.timestamp)
+    assert.equal(f.journal.health().unresolved[0].reason, 'coarse_recovery_timestamp')
+  } finally { f.close() }
+})
