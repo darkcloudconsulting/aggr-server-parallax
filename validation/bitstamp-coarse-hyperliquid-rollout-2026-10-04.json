@@ -1,0 +1,13 @@
+{
+  "checkedAt": "2026-10-04T11:27:00Z",
+  "cause": "Parallax application restart for Hyperliquid addition",
+  "nativeApi": "https://www.bitstamp.net/api/v2/transactions/{pair}/?time=day&limit=1000",
+  "nativeTimestampPrecision": "seconds",
+  "checks": [
+    { "market": "BITSTAMP:btcusd", "bucket": 1791113090000, "nativeIds": ["648832909"], "journalIds": ["648832909"], "matchedPriceQuantitySide": true, "unambiguousOrder": true },
+    { "market": "BITSTAMP:btcusd", "bucket": 1791113100000, "nativeIds": ["648832911", "648832913"], "journalIds": ["648832911", "648832913"], "matchedPriceQuantitySide": true, "unambiguousOrder": true },
+    { "market": "BITSTAMP:solusd", "bucket": 1791113090000, "nativeIds": ["648832901", "648832902", "648832903", "648832904", "648832905"], "journalIds": ["648832901", "648832902", "648832903", "648832904", "648832905"], "matchedPriceQuantitySide": true, "unambiguousOrder": true },
+    { "market": "BITSTAMP:solusd", "bucket": 1791113100000, "nativeIds": ["648832910"], "journalIds": ["648832910"], "matchedPriceQuantitySide": true, "unambiguousOrder": true }
+  ],
+  "result": "All four 10-second buckets have complete native trade membership. Recovered trades have distinct native seconds from other executions in their respective buckets, so OHLC order is unambiguous. The four coarse_recovery_timestamp issues were cleared after comparison. Future coarse recovery remains independently flagged."
+}

@@ -1,0 +1,23 @@
+{
+  "probeAt": "2026-10-04T11:20:07Z",
+  "durationSeconds": 12,
+  "venue": "HYPERLIQUID",
+  "markets": {
+    "BTC": { "subscriptionAcknowledged": true, "websocketTrades": 49, "recentRestIdentityOverlap": 10 },
+    "ETH": { "subscriptionAcknowledged": true, "websocketTrades": 31, "recentRestIdentityOverlap": 10 },
+    "SOL": { "subscriptionAcknowledged": true, "websocketTrades": 34, "recentRestIdentityOverlap": 10 }
+  },
+  "nativeIdentity": "time:coin:tid, following Hyperliquid's (block_time, coin, tid) uniqueness rule",
+  "nativeQuantity": "sz, base asset units",
+  "notional": "px * sz, USDT denominated; USDC collateral",
+  "recoveryProbe": {
+    "recentTradesReturnedPerMarket": 10,
+    "timeRangeParametersHonored": false,
+    "decision": "Resolve only ranges for which the oldest returned fill is strictly earlier than the last journaled trade; otherwise leave the gap unresolved."
+  },
+  "excludedSpot": {
+    "UBTC/USDC": { "spotId": "@142", "dayNotionalVolume": "0.0" },
+    "UETH/USDC": { "spotId": "@151", "dayNotionalVolume": "0.0" },
+    "USOL/USDC": { "spotId": "@156", "dayNotionalVolume": "0.0" }
+  }
+}

@@ -61,12 +61,22 @@ row is `BINANCE:btcusdt`, `BINANCE:ethusdt`, and `BINANCE:solusdt`.
 | `BITSTAMP` | Spot, USD | `btcusd` | `ethusd` | `solusd` |
 | `KUCOIN` | Spot, USDT | `BTC-USDT` | `ETH-USDT` | `SOL-USDT` |
 | `KUCOIN` | Linear perpetual, USDT | `XBTUSDTM` | `ETHUSDTM` | `SOLUSDTM` |
+| `HYPERLIQUID` | Linear perpetual, USDT denominated; USDC collateral | `BTC` | `ETH` | `SOL` |
 
-There are **63 configured markets** across 11 venue IDs. Deribit perpetuals,
+There are **66 configured markets** across 12 venue IDs. Deribit perpetuals,
 Coinbase INTX perpetuals, Kraken `PI_XBTUSD`, BitMEX, HTX, and Poloniex are
 excluded with reasons in [release status](RELEASE_STATUS.md). An idle but
 subscribed market has no bar for an interval with no accepted executions;
 absence of a bar alone does not prove an outage.
+
+Hyperliquid's `BTC`, `ETH`, and `SOL` IDs are its primary perpetual contracts,
+not spot tokens. Their trade sizes are base units and `vbuy`/`vsell` are
+USDT-denominated price × base size. Collateral and PnL settlement use USDC.
+HyperCore's similarly named `UBTC/USDC`, `UETH/USDC`, and `USOL/USDC` spot
+products were excluded after the API reported zero 24-hour notional volume on
+4 October 2026. Hyperliquid's `recentTrades` API provides only ten fills and
+does not honor time-range parameters; reconnect intervals outside that ten-fill
+window remain explicitly unresolved in feed health.
 
 ## Bars, fields, and retention
 
@@ -78,7 +88,7 @@ measurement has the `market` tag and these fields:
 | --- | --- |
 | `open`, `high`, `low`, `close` | Execution price OHLC ordered by native event time and deterministic trade identity. |
 | `cbuy`, `csell` | Taker-buy and taker-sell execution counts; a native aggregate contributes its underlying count when exposed. |
-| `vbuy`, `vsell` | Taker-buy and taker-sell **quote notional**: execution price × normalized base quantity. The quote unit follows the product's USD or USDT quote. |
+| `vbuy`, `vsell` | Taker-buy and taker-sell **quote notional**: execution price × normalized base quantity. The quote unit follows the product's USD, USDT, or USDC price denomination. |
 | `lbuy`, `lsell` | Liquidation quote notional where the venue provides liquidation events; absent fields mean none was written for that point. |
 
 | Retention policy | Measurement | Interval | Retention |
