@@ -63,6 +63,15 @@ InfluxQL reads. The exact image digest is in `deploy/kubernetes.yaml`.
 InfluxDB 3 Core is not a compatible target for this retention-policy and
 same-point correction design.
 
+The application build is published at GHCR digest
+`sha256:1b7eb4b6e5f94ef449f3bd496f6d3df1cd7b209c9d0cffb088a989f2f030a868`.
+GHCR currently requires authentication for this package. An authenticated
+controller pulled that exact image, saved it, and imported it into node-200's
+`k8s.io` containerd namespace. The import produced the equivalent local OCI
+manifest digest `sha256:0605fc91712d5c125c07428a250b2786f172756d5bb7a8ee7a49a90faf18d21c`;
+the deployment pins this local digest with `imagePullPolicy: Never`. Restarts
+on node-200 use that content without cluster credentials.
+
 ## Data meaning and quality
 
 `cbuy` and `csell` count underlying executions where native data exposes an

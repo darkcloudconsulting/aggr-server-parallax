@@ -119,8 +119,8 @@ spec:
         - { key: node.kubernetes.io/unschedulable, operator: Exists, effect: NoSchedule }
       containers:
         - name: server
-          image: ghcr.io/darkcloudconsulting/aggr-server-parallax@sha256:1b7eb4b6e5f94ef449f3bd496f6d3df1cd7b209c9d0cffb088a989f2f030a868
-          imagePullPolicy: IfNotPresent
+          image: local.parallax/aggr-server@sha256:0605fc91712d5c125c07428a250b2786f172756d5bb7a8ee7a49a90faf18d21c
+          imagePullPolicy: Never
           ports: [{ containerPort: 3000, name: api }]
           resources:
             requests: { cpu: 500m, memory: 1Gi }
