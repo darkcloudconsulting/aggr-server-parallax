@@ -196,7 +196,7 @@ class Kucoin extends Exchange {
     const trades = page.filter(trade => timestamp(trade) > range.from && timestamp(trade) < range.to)
       .map(trade => this.formatTrade({ ...trade, symbol: range.pair }))
     if (trades.length) this.emitTrades(null, trades)
-    if (page.length && Math.min(...page.map(timestamp)) > range.from) {
+    if (page.length === 100 && Math.min(...page.map(timestamp)) > range.from) {
       throw new Error('KuCoin recent trades do not cover the full recovery interval')
     }
     range.from = range.to

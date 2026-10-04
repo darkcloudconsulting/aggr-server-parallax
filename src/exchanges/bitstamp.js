@@ -96,7 +96,7 @@ class Bitstamp extends Exchange {
         nativeQuantity: trade.amount, nativeUnit: 'base', timestamp: +trade.date * 1000,
         price: +trade.price, size: +trade.amount, side: String(trade.type) === '0' ? 'buy' : 'sell' }))
     if (trades.length) this.emitTrades(null, trades)
-    if (page.length && Math.min(...page.map(trade => +trade.date * 1000)) > range.from + 1000) {
+    if (page.length === 1000 && Math.min(...page.map(trade => +trade.date * 1000)) > range.from + 1000) {
       throw new Error('Bitstamp recent transactions do not cover the full recovery interval')
     }
     range.from = range.to

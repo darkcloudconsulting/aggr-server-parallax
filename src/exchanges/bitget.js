@@ -262,7 +262,7 @@ class Bitget extends Exchange {
       .map(trade => this.formatTrade({ i: trade.execId, p: trade.price,
         v: trade.size, S: trade.side, T: trade.ts }, range.pair, type))
     if (trades.length) this.emitTrades(null, trades)
-    if (page.length && Math.min(...page.map(trade => +trade.ts)) > range.from) {
+    if (page.length === 100 && Math.min(...page.map(trade => +trade.ts)) > range.from) {
       throw new Error('Bitget recent fills do not cover the full recovery interval')
     }
     range.from = range.to
