@@ -1,0 +1,149 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: aggr-parallax-influx-node200
+spec:
+  capacity: { storage: 350Gi }
+  volumeMode: Filesystem
+  accessModes: [ReadWriteOnce]
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  local: { path: /srv/aggr-parallax/influx }
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - { key: kubernetes.io/hostname, operator: In, values: [snow-node-200] }
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: aggr-parallax-journal-node200
+spec:
+  capacity: { storage: 150Gi }
+  volumeMode: Filesystem
+  accessModes: [ReadWriteOnce]
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  local: { path: /srv/aggr-parallax/journal }
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - { key: kubernetes.io/hostname, operator: In, values: [snow-node-200] }
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: aggr-parallax-influx
+  namespace: ai-bot-feeder
+spec:
+  accessModes: [ReadWriteOnce]
+  resources: { requests: { storage: 350Gi } }
+  storageClassName: ""
+  volumeName: aggr-parallax-influx-node200
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: aggr-parallax-journal
+  namespace: ai-bot-feeder
+spec:
+  accessModes: [ReadWriteOnce]
+  resources: { requests: { storage: 150Gi } }
+  storageClassName: ""
+  volumeName: aggr-parallax-journal-node200
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aggr-parallax-influx
+  namespace: ai-bot-feeder
+spec:
+  replicas: 1
+  strategy: { type: Recreate }
+  selector: { matchLabels: { app: aggr-parallax-influx } }
+  template:
+    metadata: { labels: { app: aggr-parallax-influx } }
+    spec:
+      nodeSelector: { kubernetes.io/hostname: snow-node-200 }
+      tolerations:
+        - { key: node.kubernetes.io/unschedulable, operator: Exists, effect: NoSchedule }
+      containers:
+        - name: influxdb
+          image: influxdb@sha256:cc84d52f03197f67297cb30321b3a8849de9605122436244834ffc5adca3159d
+          imagePullPolicy: IfNotPresent
+          ports: [{ containerPort: 8086, name: influxql }]
+          env:
+            - { name: INFLUXDB_REPORTING_DISABLED, value: "true" }
+          resources:
+            requests: { cpu: 500m, memory: 1Gi }
+            limits: { cpu: "4", memory: 8Gi }
+          readinessProbe:
+            httpGet: { path: /ping, port: influxql }
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /ping, port: influxql }
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          volumeMounts:
+            - { name: data, mountPath: /var/lib/influxdb }
+      volumes:
+        - name: data
+          persistentVolumeClaim: { claimName: aggr-parallax-influx }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: aggr-parallax-influx
+  namespace: ai-bot-feeder
+spec:
+  selector: { app: aggr-parallax-influx }
+  ports: [{ name: influxql, port: 8086, targetPort: influxql }]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aggr-server-parallax
+  namespace: ai-bot-feeder
+spec:
+  replicas: 1
+  strategy: { type: Recreate }
+  selector: { matchLabels: { app: aggr-server-parallax } }
+  template:
+    metadata: { labels: { app: aggr-server-parallax } }
+    spec:
+      nodeSelector: { kubernetes.io/hostname: snow-node-200 }
+      tolerations:
+        - { key: node.kubernetes.io/unschedulable, operator: Exists, effect: NoSchedule }
+      containers:
+        - name: server
+          image: ghcr.io/darkcloudconsulting/aggr-server-parallax@sha256:1b7eb4b6e5f94ef449f3bd496f6d3df1cd7b209c9d0cffb088a989f2f030a868
+          imagePullPolicy: IfNotPresent
+          ports: [{ containerPort: 3000, name: api }]
+          resources:
+            requests: { cpu: 500m, memory: 1Gi }
+            limits: { cpu: "4", memory: 5Gi }
+          readinessProbe:
+            httpGet: { path: /health/feeds, port: api }
+            initialDelaySeconds: 15
+            periodSeconds: 15
+          livenessProbe:
+            httpGet: { path: /, port: api }
+            initialDelaySeconds: 60
+            periodSeconds: 30
+          volumeMounts:
+            - { name: journal, mountPath: /var/lib/aggr-journal }
+      volumes:
+        - name: journal
+          persistentVolumeClaim: { claimName: aggr-parallax-journal }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: aggr-server-parallax
+  namespace: ai-bot-feeder
+spec:
+  selector: { app: aggr-server-parallax }
+  ports: [{ name: api, port: 3000, targetPort: api }]
