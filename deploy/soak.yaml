@@ -1,0 +1,86 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: aggr-parallax-soak
+  namespace: ai-bot-feeder
+data:
+  soak.js: |
+    const fs = require('fs')
+    const output = '/var/lib/aggr-journal/soak-2026-10-04.jsonl'
+    const started = Date.now()
+    const end = started + 24 * 60 * 60 * 1000
+    const interval = 5 * 60 * 1000
+    async function sample() {
+      const record = { at: new Date().toISOString() }
+      try {
+        const response = await fetch('http://aggr-server-parallax:3000/health/feeds', { signal: AbortSignal.timeout(15000) })
+        if (!response.ok) throw new Error(`feed health HTTP ${response.status}`)
+        const { feeds, journal } = await response.json()
+        record.markets = feeds.length
+        record.connected = feeds.filter(feed => feed.connected).length
+        record.traded = feeds.filter(feed => feed.lastTrade).length
+        record.lastTrades = Object.fromEntries(feeds.map(feed => [feed.market, feed.lastTrade]))
+        record.pendingWrites = journal.pending
+        record.unresolved = journal.unresolved
+        record.weakIdentityMarkets = feeds.filter(feed => feed.intervals.some(i => i.weakIdentityEvents)).map(feed => feed.market)
+        record.settledMarkets = feeds.filter(feed => feed.intervals.some(i => i.finality === 'writer_settled')).length
+      } catch (error) { record.feedError = error.message }
+      try {
+        const response = await fetch('http://aggr-parallax-influx:8086/ping', { signal: AbortSignal.timeout(15000) })
+        record.influxVersion = response.headers.get('x-influxdb-version')
+        record.influxPing = response.status
+        const query = await fetch('http://aggr-parallax-influx:8086/query?db=aggr_parallax&q=' +
+          encodeURIComponent("SELECT LAST(cbuy) FROM aggr_1m.trades_1m WHERE market='BINANCE:btcusdt'"),
+          { signal: AbortSignal.timeout(15000) })
+        const result = await query.json()
+        record.influxQueryOk = query.ok && !result.error && !!result.results?.[0]?.series?.length
+      } catch (error) { record.influxError = error.message }
+      const stats = fs.statfsSync('/var/lib/aggr-journal')
+      record.journalUsedBytes = (stats.blocks - stats.bfree) * stats.bsize
+      fs.appendFileSync(output, JSON.stringify(record) + '\n')
+      console.log(JSON.stringify({ at: record.at, connected: record.connected,
+        settledMarkets: record.settledMarkets, pendingWrites: record.pendingWrites,
+        unresolved: record.unresolved?.length, influxQueryOk: record.influxQueryOk,
+        feedError: record.feedError, influxError: record.influxError }))
+    }
+    async function main() {
+      do {
+        await sample()
+        const wait = Math.min(interval, end - Date.now())
+        if (wait > 0) await new Promise(resolve => setTimeout(resolve, wait))
+      } while (Date.now() < end)
+      fs.appendFileSync(output, JSON.stringify({ completedAt: new Date().toISOString(), startedAt: new Date(started).toISOString() }) + '\n')
+    }
+    main().catch(error => { console.error(error); process.exitCode = 1 })
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: aggr-parallax-soak-20261004
+  namespace: ai-bot-feeder
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: 90000
+  template:
+    metadata: { labels: { app: aggr-parallax-soak } }
+    spec:
+      restartPolicy: Never
+      nodeSelector: { kubernetes.io/hostname: snow-node-200 }
+      tolerations:
+        - { key: node.kubernetes.io/unschedulable, operator: Exists, effect: NoSchedule }
+      containers:
+        - name: soak
+          image: local.parallax/aggr-server@sha256:0605fc91712d5c125c07428a250b2786f172756d5bb7a8ee7a49a90faf18d21c
+          imagePullPolicy: Never
+          command: [node, /etc/parallax/soak.js]
+          resources:
+            requests: { cpu: 50m, memory: 64Mi }
+            limits: { cpu: 500m, memory: 256Mi }
+          volumeMounts:
+            - { name: journal, mountPath: /var/lib/aggr-journal }
+            - { name: script, mountPath: /etc/parallax, readOnly: true }
+      volumes:
+        - name: journal
+          persistentVolumeClaim: { claimName: aggr-parallax-journal }
+        - name: script
+          configMap: { name: aggr-parallax-soak }
