@@ -13,6 +13,7 @@ WORKDIR /app
 COPY --from=builder /app/node_modules ./node_modules
 COPY src ./src
 COPY scripts/repair-okx-launch.js ./scripts/repair-okx-launch.js
+COPY scripts/collect-open-interest.js ./scripts/collect-open-interest.js
 COPY index.js ecosystem.config.js config.parallax.json ./
 RUN mkdir -p /app/products /var/lib/aggr-journal && chown -R node:node /app /var/lib/aggr-journal
 USER node

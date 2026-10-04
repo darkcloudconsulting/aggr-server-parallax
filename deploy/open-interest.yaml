@@ -1,0 +1,35 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: aggr-parallax-open-interest
+  namespace: ai-bot-feeder
+spec:
+  suspend: false
+  schedule: "*/5 * * * *"
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 120
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      activeDeadlineSeconds: 150
+      template:
+        spec:
+          restartPolicy: OnFailure
+          nodeSelector:
+            kubernetes.io/hostname: snow-node-200
+          tolerations:
+            - key: node.kubernetes.io/unschedulable
+              operator: Exists
+              effect: NoSchedule
+          containers:
+            - name: sampler
+              image: local.parallax/aggr-server@sha256:1c45cb968ac3bc8a27ead7c639b7465c5a4b4f16cd888ae5532ed21e928a8c10
+              imagePullPolicy: Never
+              command: [node, /app/scripts/collect-open-interest.js]
+              env:
+                - { name: INFLUX_HOST, value: aggr-parallax-influx.ai-bot-feeder.svc.cluster.local }
+              resources:
+                requests: { cpu: 50m, memory: 64Mi }
+                limits: { cpu: 500m, memory: 256Mi }
