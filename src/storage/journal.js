@@ -43,6 +43,11 @@ class Journal {
       (@event_key, @market, @bucket, @event_time, @received_at,
        @price, @size, @side, @executions, @liquidation,
        @native_id, @native_quantity, @native_unit, @source, @weak_identity)`)
+    this.existing = this.db.prepare('SELECT bucket, event_time, price, size, side, executions, native_quantity, native_unit FROM events WHERE event_key=?')
+    this.correct = this.db.prepare(`UPDATE events SET bucket=@bucket, event_time=@event_time,
+      price=@price, size=@size, side=@side, executions=@executions,
+      native_quantity=@native_quantity, native_unit=@native_unit, source=@source
+      WHERE event_key=@event_key`)
     this.dirty = this.db.prepare(`INSERT INTO dirty_buckets VALUES (?, ?, ?)
       ON CONFLICT(market, bucket) DO UPDATE SET updated_at=excluded.updated_at`)
     this.issue = this.db.prepare(`INSERT INTO unresolved VALUES (?, ?, ?, ?, ?)
@@ -87,6 +92,16 @@ class Journal {
           this.dirty.run(market, bucket, now)
           this.feedState.run(market, Number(trade.timestamp), now, weak ? 1 : 0)
           accepted.push(trade)
+        } else if (source === 'recovery' && !weak) {
+          const prior = this.existing.get(eventKey)
+          if (prior && (prior.event_time !== row.event_time || prior.price !== row.price ||
+            prior.size !== row.size || prior.side !== row.side ||
+            prior.executions !== row.executions || prior.native_quantity !== row.native_quantity ||
+            prior.native_unit !== row.native_unit)) {
+            this.correct.run(row)
+            this.dirty.run(market, prior.bucket, now)
+            this.dirty.run(market, bucket, now)
+          }
         }
       }
       return accepted

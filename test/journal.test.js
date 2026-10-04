@@ -59,3 +59,19 @@ test('invalid size and out-of-horizon recovery become explicit issues', () => {
     assert.equal(f.journal.health().unresolved.length, 2)
   } finally { f.close() }
 })
+
+test('native recovery replaces an aggregated execution and inserts its missing members', () => {
+  const f = fixture()
+  try {
+    const last = { ...trade('12', 1000, 100, 3), count: 3, nativeQuantity: '3' }
+    f.journal.append([last], 'live')
+    f.journal.markWritten(f.journal.pending())
+    const individual = { ...last, size: 1, count: 1, nativeQuantity: '1' }
+    f.journal.append([{ ...individual, id: '10' }, { ...individual, id: '11' }, individual], 'recovery')
+    const bar = f.journal.bar('OKEX:BTC-USDT', last.timestamp - 1000)
+    assert.equal(bar.cbuy, 3)
+    assert.equal(bar.vbuy, 300)
+    assert.equal(f.journal.pending().length, 1)
+    assert.equal(f.journal.db.prepare('SELECT size FROM events WHERE native_id=?').get('12').size, 1)
+  } finally { f.close() }
+})

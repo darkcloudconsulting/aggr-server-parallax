@@ -12,6 +12,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends tini \
 WORKDIR /app
 COPY --from=builder /app/node_modules ./node_modules
 COPY src ./src
+COPY scripts/repair-okx-launch.js ./scripts/repair-okx-launch.js
 COPY index.js ecosystem.config.js config.parallax.json ./
 RUN mkdir -p /app/products /var/lib/aggr-journal && chown -R node:node /app /var/lib/aggr-journal
 USER node
