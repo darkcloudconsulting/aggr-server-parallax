@@ -2,6 +2,8 @@
 
 For the Parallax deployment, market matrix, and current validation status, see
 [README-PARALLAX.md](README-PARALLAX.md).
+For its collected symbols, InfluxQL measurements, and retention periods, see
+[the Parallax data catalog](docs/DATA_CATALOG.md).
 
 Autonomous multi market trades monitoring, storing and resampling solution
 

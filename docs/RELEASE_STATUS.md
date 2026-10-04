@@ -146,6 +146,20 @@ event by event with its native API and cleared only after confirming complete
 The native API does not expose subsecond recovery timestamps, so any future
 coarse Bitstamp recovery remains flagged for independent validation.
 
+At 21:59 AEDT on 4 October (10:59 UTC), a bounded stability check found both
+Parallax deployments and the soak pod Ready with zero restarts. All 63 markets
+were connected and had observed a live trade on their current subscriptions;
+there were no unresolved issues. The latest soak samples reported successful
+Influx reads and settled bars. This checkpoint does not replace the full
+24-hour release gate.
+
+Snowgraf now has the additive **Aggr Parallax (InfluxQL)** data source, UID
+`aggr-parallax-influxql`. Its Grafana proxy returned the 12 project retention
+policies plus `autogen`, and a live `BINANCE:btcusdt` one-minute bar. The
+[data catalog](DATA_CATALOG.md) lists all 63 symbols, bar fields, and retention
+periods. The versioned datasource definition and idempotent registration are
+in [`deploy/`](../deploy/grafana-datasource.json).
+
 At 10:04 UTC, the ZFS pool was ONLINE with no known errors; project, Influx,
 and journal datasets used about 47 MiB, 23 MiB, and 24 MiB respectively within
 their 500/350/150 GiB quotas. Node-200 remained cordoned. The original snow

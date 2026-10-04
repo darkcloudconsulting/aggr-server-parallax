@@ -1,0 +1,15 @@
+{
+  "uid": "aggr-parallax-influxql",
+  "name": "Aggr Parallax (InfluxQL)",
+  "type": "influxdb",
+  "access": "proxy",
+  "url": "http://aggr-parallax-influx.ai-bot-feeder.svc.cluster.local:8086",
+  "database": "aggr_parallax",
+  "isDefault": false,
+  "jsonData": {
+    "dbName": "aggr_parallax",
+    "version": "InfluxQL",
+    "httpMode": "GET",
+    "timeInterval": "10s"
+  }
+}
