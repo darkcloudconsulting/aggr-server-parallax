@@ -64,11 +64,11 @@ InfluxDB 3 Core is not a compatible target for this retention-policy and
 same-point correction design.
 
 The application build is published at GHCR digest
-`sha256:1b7eb4b6e5f94ef449f3bd496f6d3df1cd7b209c9d0cffb088a989f2f030a868`.
+`sha256:82894dfd4877a1a9162f25ce1afd66a3242d8bb0ef92e2bd4770234124ae979c`.
 GHCR currently requires authentication for this package. An authenticated
 controller pulled that exact image, saved it, and imported it into node-200's
 `k8s.io` containerd namespace. The import produced the equivalent local OCI
-manifest digest `sha256:0605fc91712d5c125c07428a250b2786f172756d5bb7a8ee7a49a90faf18d21c`;
+manifest digest `sha256:f9719501d5c5350d64fce52a798321cb354aa0a00aabea7f0885aad0a986ed3d`;
 the deployment pins this local digest with `imagePullPolicy: Never`. Restarts
 on node-200 use that content without cluster credentials.
 

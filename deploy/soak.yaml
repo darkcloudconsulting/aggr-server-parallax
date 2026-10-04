@@ -1,12 +1,12 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: aggr-parallax-soak
+  name: aggr-parallax-soak-r2
   namespace: ai-bot-feeder
 data:
   soak.js: |
     const fs = require('fs')
-    const output = '/var/lib/aggr-journal/soak-2026-10-04.jsonl'
+    const output = '/var/lib/aggr-journal/soak-2026-10-04-r2.jsonl'
     const started = Date.now()
     const end = started + 24 * 60 * 60 * 1000
     const interval = 5 * 60 * 1000
@@ -56,7 +56,7 @@ data:
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: aggr-parallax-soak-20261004
+  name: aggr-parallax-soak-20261004-r2
   namespace: ai-bot-feeder
 spec:
   backoffLimit: 0
@@ -70,7 +70,7 @@ spec:
         - { key: node.kubernetes.io/unschedulable, operator: Exists, effect: NoSchedule }
       containers:
         - name: soak
-          image: local.parallax/aggr-server@sha256:0605fc91712d5c125c07428a250b2786f172756d5bb7a8ee7a49a90faf18d21c
+          image: local.parallax/aggr-server@sha256:f9719501d5c5350d64fce52a798321cb354aa0a00aabea7f0885aad0a986ed3d
           imagePullPolicy: Never
           command: [node, /etc/parallax/soak.js]
           resources:
@@ -83,4 +83,4 @@ spec:
         - name: journal
           persistentVolumeClaim: { claimName: aggr-parallax-journal }
         - name: script
-          configMap: { name: aggr-parallax-soak }
+          configMap: { name: aggr-parallax-soak-r2 }

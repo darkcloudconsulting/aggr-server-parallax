@@ -6,7 +6,9 @@ process.argv.push('config=config.parallax.json')
 const config = require('../src/config')
 
 const selected = process.argv.slice(2).filter(value => !value.startsWith('config='))
-const markets = selected.length ? selected : config.pairs
+const excluded = (process.env.PARALLAX_RECONCILE_EXCLUDE || '').split(',').filter(Boolean)
+const markets = selected.length ? selected : config.pairs.filter(market =>
+  !excluded.some(venue => market.startsWith(`${venue}:`)))
 const repoNames = Object.fromEntries(config.exchanges.map(name => {
   const instance = new (require(`../src/exchanges/${name}`))()
   return [instance.id, name]
