@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
-# Run on snow-node-200 as root. Fails closed if the target disk changed.
+# Historical whole-disk provisioning recipe, retained for launch evidence.
+# Superseded by the partitioned layout in docs/NODE200_STORAGE_2026-10-05.md.
+# Do not run against the current node-200 disk.
 set -euo pipefail
+echo 'This historical whole-disk provisioner is retired; see docs/NODE200_STORAGE_2026-10-05.md' >&2
+exit 1
 
 device=/dev/disk/by-id/nvme-UCSC-NVME-H32003_SDM00000E225
 pool=aggr-parallax

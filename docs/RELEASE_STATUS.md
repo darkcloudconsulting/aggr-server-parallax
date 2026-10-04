@@ -1,4 +1,4 @@
-# Parallax feed release status — 2026-10-04
+# Parallax feed release status — current as of 2026-10-05
 
 Status: **PARALLEL FEED LIVE; 24-HOUR VALIDATION PENDING**.
 
@@ -51,11 +51,14 @@ An empty 25-second window is **not** evidence of an outage.
 
 ## Storage and database
 
-Node `snow-node-200` remains cordoned. The OS is on `nvme1n1`. The new
+At initial deployment, node `snow-node-200` was cordoned. The OS is on
+`nvme1n1`. The new
 `nvme0n1` was rechecked by stable by-id, model, size, and absence of signatures
 immediately before creating the single-disk `aggr-parallax` pool. Dataset
 quotas: project 500 GiB, InfluxDB 350 GiB, journal 150 GiB. The rest of the
-pool is unallocated for later PostgreSQL datasets.
+pool was then unallocated for later PostgreSQL datasets. This whole-disk
+layout was superseded by the 5 October partitioned layout recorded in the
+[current node-200 storage record](NODE200_STORAGE_2026-10-05.md).
 
 InfluxDB `1.13.0` is documented but its Docker tag returns `manifest unknown`
 and its official tarball URL returns HTTP 404 as of this review. InfluxDB
@@ -247,6 +250,30 @@ deployment specifications (snow, SOL, Parallax trade service, InfluxDB) were
 identical before and after the dashboard and sampler rollout and all remained
 Ready at 1/1. The new sampler does not reset the 24-hour trade validation
 window.
+
+## Node-200 repartition and stability run — 2026-10-05 AEDT
+
+The owner repartitioned `nvme0n1` into a roughly 650 GiB ZFS partition for
+Parallax and a roughly 2.3 TiB XFS partition mounted at `/srv/pg-node200`.
+The recreated `aggr-parallax` pool has a 520 GiB project quota, split into
+420 GiB for InfluxDB and 100 GiB for the journal. The pool is online with no
+reported data errors. The [current storage record](NODE200_STORAGE_2026-10-05.md)
+details the mount, limits, boot status, and the still-unreconciled static
+Kubernetes PV/PVC declarations of 350 GiB for Influx and 150 GiB for the
+journal. The journal's effective ZFS limit is 100 GiB.
+
+The previous `r5` soak Job stopped during the storage change; its JSONL
+evidence remains on the journal dataset. The new
+`aggr-parallax-soak-20261005-r6` Job started at **2026-10-05 02:05:48 AEDT**
+(2026-10-04 15:05:48 UTC) and samples every five minutes into
+`/srv/aggr-parallax/journal/soak-2026-10-05-r6.jsonl`. Its first sample
+reported 66 connected markets, 45 with a recent settled interval, 124
+unresolved journal entries, and a successful Influx query. The collector is
+receiving new data, and pre-change one-minute bars remained queryable for all
+66 markets. Of the 124 unresolved entries, 122 were first seen after the
+repartition and concern buckets around 01:36:30–01:44:50 AEDT. These are
+recorded as incomplete pending native recovery verification. The new 24-hour
+window is due after **2026-10-06 02:05:48 AEDT**; no PASS is claimed yet.
 
 ## Remaining release gate
 

@@ -1,12 +1,12 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: aggr-parallax-soak-r5
+  name: aggr-parallax-soak-r6
   namespace: ai-bot-feeder
 data:
   soak.js: |
     const fs = require('fs')
-    const output = '/var/lib/aggr-journal/soak-2026-10-04-r5.jsonl'
+    const output = '/var/lib/aggr-journal/soak-2026-10-05-r6.jsonl'
     const started = Date.now()
     const end = started + 24 * 60 * 60 * 1000
     const interval = 5 * 60 * 1000
@@ -56,7 +56,7 @@ data:
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: aggr-parallax-soak-20261004-r5
+  name: aggr-parallax-soak-20261005-r6
   namespace: ai-bot-feeder
 spec:
   backoffLimit: 0
@@ -83,4 +83,4 @@ spec:
         - name: journal
           persistentVolumeClaim: { claimName: aggr-parallax-journal }
         - name: script
-          configMap: { name: aggr-parallax-soak-r5 }
+          configMap: { name: aggr-parallax-soak-r6 }
