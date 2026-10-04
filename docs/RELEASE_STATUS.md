@@ -111,6 +111,7 @@ a successful Influx query. Completion is expected after
 **2026-10-05 10:03:58 UTC**. Just after the final restart, 62 subscriptions
 had delivered a live trade; thin `BITGET:SOLUSD` had an earlier trade but was
 still awaiting one on the new socket. This is not classified as an outage.
+By 10:07 UTC, all 63 current subscriptions had delivered a live trade.
 
 The first native REST check matched Binance spot, Binance futures, Coinbase
 spot, Kraken spot, Bybit linear, Crypto.com spot, Bitfinex spot, Bitstamp spot,
@@ -134,6 +135,10 @@ Bitstamp's second-resolution REST timestamps. A subsequent Bybit ETH spot
 window matched six executions. The raw receipts are retained in
 [`validation/reconcile-other-markets-2026-10-04.json`](../validation/reconcile-other-markets-2026-10-04.json)
 and [`validation/reconcile-bybit-spot-2026-10-04.json`](../validation/reconcile-bybit-spot-2026-10-04.json).
+An additional 18-market OKX and Bitget reconciliation matched all 12 windows
+with native executions; six short windows contained no trade and remain
+unverified for inactivity. See
+[`validation/reconcile-okx-bitget-2026-10-04.json`](../validation/reconcile-okx-bitget-2026-10-04.json).
 Bitstamp's two coarse recovery buckets after deployment restarts were compared
 event by event with its native API and cleared only after confirming complete
 10-second membership and unambiguous OHLC order; see

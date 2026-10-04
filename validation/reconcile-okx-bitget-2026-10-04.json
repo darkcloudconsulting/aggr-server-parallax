@@ -1,0 +1,186 @@
+{
+  "startedAt": "2026-10-04T10:07:23.063Z",
+  "markets": {
+    "OKEX:BTC-USDT": {
+      "from": 1791108427786,
+      "to": 1791108430786,
+      "native": 7,
+      "journal": 7,
+      "missing": [],
+      "extra": [],
+      "differences": [],
+      "status": "MATCH"
+    },
+    "OKEX:ETH-USDT": {
+      "from": 1791108428140,
+      "to": 1791108431140,
+      "native": 2,
+      "journal": 2,
+      "missing": [],
+      "extra": [],
+      "differences": [],
+      "status": "MATCH"
+    },
+    "OKEX:SOL-USDT": {
+      "from": 1791108428465,
+      "to": 1791108431465,
+      "native": 3,
+      "journal": 3,
+      "missing": [],
+      "extra": [],
+      "differences": [],
+      "status": "MATCH"
+    },
+    "OKEX:BTC-USDT-SWAP": {
+      "from": 1791108428822,
+      "to": 1791108431822,
+      "native": 7,
+      "journal": 7,
+      "missing": [],
+      "extra": [],
+      "differences": [],
+      "status": "MATCH"
+    },
+    "OKEX:ETH-USDT-SWAP": {
+      "from": 1791108429448,
+      "to": 1791108432448,
+      "native": 5,
+      "journal": 5,
+      "missing": [],
+      "extra": [],
+      "differences": [],
+      "status": "MATCH"
+    },
+    "OKEX:SOL-USDT-SWAP": {
+      "from": 1791108430014,
+      "to": 1791108433014,
+      "native": 19,
+      "journal": 19,
+      "missing": [],
+      "extra": [],
+      "differences": [],
+      "status": "MATCH"
+    },
+    "OKEX:BTC-USD-SWAP": {
+      "from": 1791108430570,
+      "to": 1791108433570,
+      "native": 0,
+      "journal": 0,
+      "missing": [],
+      "extra": [],
+      "differences": [],
+      "status": "QUIET_UNVERIFIED"
+    },
+    "OKEX:ETH-USD-SWAP": {
+      "from": 1791108431088,
+      "to": 1791108434088,
+      "native": 0,
+      "journal": 0,
+      "missing": [],
+      "extra": [],
+      "differences": [],
+      "status": "QUIET_UNVERIFIED"
+    },
+    "OKEX:SOL-USD-SWAP": {
+      "from": 1791108431624,
+      "to": 1791108434624,
+      "native": 2,
+      "journal": 2,
+      "missing": [],
+      "extra": [],
+      "differences": [],
+      "status": "MATCH"
+    },
+    "BITGET:BTCUSDT-SPOT": {
+      "from": 1791108432878,
+      "to": 1791108435878,
+      "native": 1,
+      "journal": 1,
+      "missing": [],
+      "extra": [],
+      "differences": [],
+      "status": "MATCH"
+    },
+    "BITGET:ETHUSDT-SPOT": {
+      "from": 1791108433223,
+      "to": 1791108436223,
+      "native": 0,
+      "journal": 0,
+      "missing": [],
+      "extra": [],
+      "differences": [],
+      "status": "QUIET_UNVERIFIED"
+    },
+    "BITGET:SOLUSDT-SPOT": {
+      "from": 1791108433617,
+      "to": 1791108436617,
+      "native": 1,
+      "journal": 1,
+      "missing": [],
+      "extra": [],
+      "differences": [],
+      "status": "MATCH"
+    },
+    "BITGET:BTCUSDT": {
+      "from": 1791108433984,
+      "to": 1791108436984,
+      "native": 21,
+      "journal": 21,
+      "missing": [],
+      "extra": [],
+      "differences": [],
+      "status": "MATCH"
+    },
+    "BITGET:ETHUSDT": {
+      "from": 1791108434399,
+      "to": 1791108437399,
+      "native": 1,
+      "journal": 1,
+      "missing": [],
+      "extra": [],
+      "differences": [],
+      "status": "MATCH"
+    },
+    "BITGET:SOLUSDT": {
+      "from": 1791108434778,
+      "to": 1791108437778,
+      "native": 5,
+      "journal": 5,
+      "missing": [],
+      "extra": [],
+      "differences": [],
+      "status": "MATCH"
+    },
+    "BITGET:BTCUSD": {
+      "from": 1791108435143,
+      "to": 1791108438143,
+      "native": 0,
+      "journal": 0,
+      "missing": [],
+      "extra": [],
+      "differences": [],
+      "status": "QUIET_UNVERIFIED"
+    },
+    "BITGET:ETHUSD": {
+      "from": 1791108435517,
+      "to": 1791108438517,
+      "native": 0,
+      "journal": 0,
+      "missing": [],
+      "extra": [],
+      "differences": [],
+      "status": "QUIET_UNVERIFIED"
+    },
+    "BITGET:SOLUSD": {
+      "from": 1791108435844,
+      "to": 1791108438844,
+      "native": 0,
+      "journal": 0,
+      "missing": [],
+      "extra": [],
+      "differences": [],
+      "status": "QUIET_UNVERIFIED"
+    }
+  },
+  "finishedAt": "2026-10-04T10:07:32.194Z"
+}
