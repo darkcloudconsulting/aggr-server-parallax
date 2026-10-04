@@ -214,6 +214,40 @@ both Ready at 1/1. The InfluxDB deployment spec was also unchanged.
 The [repository image build](https://github.com/darkcloudconsulting/aggr-server-parallax/actions/runs/37198935660)
 for this merged source revision completed successfully.
 
+## Feed dashboard and open interest — 2026-10-04
+
+The dedicated [Aggr Parallax feed dashboard](http://192.168.10.208:32161/d/aggr-parallax-feed/aggr-parallax-e28094-btc-eth-sol-feed)
+is live in Snowgraf's **Aggr Parallax Feed** folder. Its 15 panels cover
+four-venue open interest, five-venue trade turnover over several windows,
+observed liquidation notional and intensity for four reporting venues,
+liquidation bar coverage, quote-volume-weighted taker buy share, and a
+turnover-weighted close proxy. All 13 data panels returned Grafana datasource
+frames without errors for BTC, ETH, and SOL. The dashboard is versioned in
+[`deploy/grafana-feed-dashboard.json`](../deploy/grafana-feed-dashboard.json)
+and registered by [`deploy/grafana-feed-dashboard.py`](../deploy/grafana-feed-dashboard.py).
+The close proxy is not execution VWAP; liquidation streams can omit events,
+including Binance's selected order per one-second interval.
+
+The separate `aggr-parallax-open-interest` CronJob samples Binance USDⓈ-M,
+Bybit linear, OKX USDT swaps, and Hyperliquid every five minutes. It writes
+12 venue snapshots and three complete four-venue totals to `aggr_5m` (90-day
+retention), with no historical backfill. The CronJob uses immutable local OCI
+image digest `sha256:1c45cb968ac3bc8a27ead7c639b7465c5a4b4f16cd888ae5532ed21e928a8c10`.
+The first scheduled run, the corrected 12:35 UTC check, and the 12:40 UTC
+scheduled run each completed with all three assets and no failures. The
+initial 12:25 and 12:30 UTC snapshots
+used Bybit's both-side fields; all six Bybit points and their six totals were
+corrected at the same Influx timestamps after checking the source's 2:1
+both-to-single-side relationship. See
+[`validation/bybit-open-interest-launch-correction-2026-10-04.json`](../validation/bybit-open-interest-launch-correction-2026-10-04.json).
+
+At 12:35 UTC, the trade soak still reported 66 connected and settled markets,
+zero unresolved issues, and successful Influx reads. The four existing
+deployment specifications (snow, SOL, Parallax trade service, InfluxDB) were
+identical before and after the dashboard and sampler rollout and all remained
+Ready at 1/1. The new sampler does not reset the 24-hour trade validation
+window.
+
 ## Remaining release gate
 
 Run the new deployment for 24 hours and reconcile busy and quiet intervals

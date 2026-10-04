@@ -1,0 +1,679 @@
+{
+  "uid": "aggr-parallax-feed",
+  "title": "Aggr Parallax — BTC / ETH / SOL feed",
+  "tags": [
+    "aggr-server",
+    "parallax",
+    "market-data"
+  ],
+  "description": "Parallel BTC, ETH, SOL feed; trade, liquidation and four-venue open interest views.",
+  "timezone": "browser",
+  "refresh": "1m",
+  "schemaVersion": 42,
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "templating": {
+    "list": [
+      {
+        "name": "asset",
+        "label": "Asset",
+        "type": "custom",
+        "query": "BTC,ETH,SOL",
+        "current": {
+          "text": "BTC",
+          "value": "BTC"
+        },
+        "options": [
+          {
+            "text": "BTC",
+            "value": "BTC",
+            "selected": true
+          },
+          {
+            "text": "ETH",
+            "value": "ETH",
+            "selected": false
+          },
+          {
+            "text": "SOL",
+            "value": "SOL",
+            "selected": false
+          }
+        ],
+        "multi": false,
+        "includeAll": false
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Scope and freshness",
+      "type": "text",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 4
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "**New Parallax history.** Choose BTC, ETH, or SOL above. Open interest is sampled every five minutes for Binance USDⓈ-M, Bybit linear, OKX USDT swap, and Hyperliquid. The USD-equivalent sum assumes USDT and USDC near $1; it is one-sided open interest, not long plus short. Trade panels use the five large linear perpetual markets, including Bitget. Liquidation panels use the four venues that publish liquidation events; they show *observed stream notional*, which can undercount exchange activity. Empty bars are not proof of an outage. [Data catalog](http://192.168.10.208:30084/) has market identities and retention."
+      }
+    },
+    {
+      "id": 2,
+      "title": "Open interest · four venues",
+      "type": "stat",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "aggr-parallax-influxql"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "aggr-parallax-influxql"
+          },
+          "query": "SELECT notional_usd FROM aggr_5m.open_interest_total WHERE asset='${asset}' AND time > now() - 15m ORDER BY time DESC LIMIT 1",
+          "rawQuery": true,
+          "resultFormat": "time_series",
+          "refId": "A",
+          "alias": ""
+        }
+      ],
+      "gridPos": {
+        "x": 0,
+        "y": 4,
+        "w": 6,
+        "h": 5
+      },
+      "description": "Sum appears only when all four venue snapshots pass validation. Nominal USD-equivalent with stablecoins treated near $1.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "decimals": 2
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value"
+      }
+    },
+    {
+      "id": 3,
+      "title": "Trade volume · last 5m",
+      "type": "stat",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "aggr-parallax-influxql"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "aggr-parallax-influxql"
+          },
+          "query": "SELECT SUM(vbuy)+SUM(vsell) FROM aggr_1m.trades_1m WHERE market =~ /(?i)^(BINANCE_FUTURES:${asset}usdt|BYBIT:${asset}USDT|OKEX:${asset}-USDT-SWAP|BITGET:${asset}USDT|HYPERLIQUID:${asset})$/ AND time > now() - 5m",
+          "rawQuery": true,
+          "resultFormat": "time_series",
+          "refId": "A",
+          "alias": ""
+        }
+      ],
+      "gridPos": {
+        "x": 6,
+        "y": 4,
+        "w": 6,
+        "h": 5
+      },
+      "description": "Quote notional across five selected linear perpetual venues; no extrapolation before feed launch.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "decimals": 2
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value"
+      }
+    },
+    {
+      "id": 4,
+      "title": "Trade volume · last 1h",
+      "type": "stat",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "aggr-parallax-influxql"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "aggr-parallax-influxql"
+          },
+          "query": "SELECT SUM(vbuy)+SUM(vsell) FROM aggr_1m.trades_1m WHERE market =~ /(?i)^(BINANCE_FUTURES:${asset}usdt|BYBIT:${asset}USDT|OKEX:${asset}-USDT-SWAP|BITGET:${asset}USDT|HYPERLIQUID:${asset})$/ AND time > now() - 1h",
+          "rawQuery": true,
+          "resultFormat": "time_series",
+          "refId": "A",
+          "alias": ""
+        }
+      ],
+      "gridPos": {
+        "x": 12,
+        "y": 4,
+        "w": 6,
+        "h": 5
+      },
+      "description": "Quote notional across five selected linear perpetual venues; no extrapolation before feed launch.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "decimals": 2
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value"
+      }
+    },
+    {
+      "id": 5,
+      "title": "Trade volume · last 24h",
+      "type": "stat",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "aggr-parallax-influxql"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "aggr-parallax-influxql"
+          },
+          "query": "SELECT SUM(vbuy)+SUM(vsell) FROM aggr_1m.trades_1m WHERE market =~ /(?i)^(BINANCE_FUTURES:${asset}usdt|BYBIT:${asset}USDT|OKEX:${asset}-USDT-SWAP|BITGET:${asset}USDT|HYPERLIQUID:${asset})$/ AND time > now() - 24h",
+          "rawQuery": true,
+          "resultFormat": "time_series",
+          "refId": "A",
+          "alias": ""
+        }
+      ],
+      "gridPos": {
+        "x": 18,
+        "y": 4,
+        "w": 6,
+        "h": 5
+      },
+      "description": "Quote notional across five selected linear perpetual venues; no extrapolation before feed launch.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "decimals": 2
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value"
+      }
+    },
+    {
+      "id": 6,
+      "title": "Open interest by venue · 5m",
+      "type": "timeseries",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "aggr-parallax-influxql"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "aggr-parallax-influxql"
+          },
+          "query": "SELECT LAST(notional_usd) FROM aggr_5m.open_interest WHERE asset='${asset}' AND $timeFilter GROUP BY time(5m),venue fill(null)",
+          "rawQuery": true,
+          "resultFormat": "time_series",
+          "refId": "A",
+          "alias": "$tag_venue"
+        }
+      ],
+      "gridPos": {
+        "x": 0,
+        "y": 9,
+        "w": 12,
+        "h": 9
+      },
+      "description": "Native open interest normalized to nominal USD equivalent at the venue mark or reported value.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "decimals": 2
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 7,
+      "title": "Open interest total · complete four-venue samples",
+      "type": "timeseries",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "aggr-parallax-influxql"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "aggr-parallax-influxql"
+          },
+          "query": "SELECT notional_usd FROM aggr_5m.open_interest_total WHERE asset='${asset}' AND $timeFilter",
+          "rawQuery": true,
+          "resultFormat": "time_series",
+          "refId": "A",
+          "alias": ""
+        }
+      ],
+      "gridPos": {
+        "x": 12,
+        "y": 9,
+        "w": 12,
+        "h": 9
+      },
+      "description": "No point is written when any selected venue is missing or stale.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "decimals": 2
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 8,
+      "title": "Trade volume · 5m across five large perps",
+      "type": "timeseries",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "aggr-parallax-influxql"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "aggr-parallax-influxql"
+          },
+          "query": "SELECT SUM(vbuy)+SUM(vsell) FROM aggr_5m.trades_5m WHERE market =~ /(?i)^(BINANCE_FUTURES:${asset}usdt|BYBIT:${asset}USDT|OKEX:${asset}-USDT-SWAP|BITGET:${asset}USDT|HYPERLIQUID:${asset})$/ AND $timeFilter GROUP BY time(5m) fill(null)",
+          "rawQuery": true,
+          "resultFormat": "time_series",
+          "refId": "A",
+          "alias": ""
+        }
+      ],
+      "gridPos": {
+        "x": 0,
+        "y": 18,
+        "w": 12,
+        "h": 9
+      },
+      "description": "Sum of taker buy and sell quote notional across Binance, Bybit, OKX, Bitget, and Hyperliquid.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "decimals": 2
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 9,
+      "title": "Trade volume by venue · 5m",
+      "type": "timeseries",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "aggr-parallax-influxql"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "aggr-parallax-influxql"
+          },
+          "query": "SELECT SUM(vbuy)+SUM(vsell) FROM aggr_5m.trades_5m WHERE market =~ /(?i)^(BINANCE_FUTURES:${asset}usdt|BYBIT:${asset}USDT|OKEX:${asset}-USDT-SWAP|BITGET:${asset}USDT|HYPERLIQUID:${asset})$/ AND $timeFilter GROUP BY time(5m),market fill(null)",
+          "rawQuery": true,
+          "resultFormat": "time_series",
+          "refId": "A",
+          "alias": "$tag_market"
+        }
+      ],
+      "gridPos": {
+        "x": 12,
+        "y": 18,
+        "w": 12,
+        "h": 9
+      },
+      "description": "Same five perps, split by exact market ID.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "decimals": 2
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 10,
+      "title": "Mean reported liquidation notional per venue · 5m",
+      "type": "timeseries",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "aggr-parallax-influxql"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "aggr-parallax-influxql"
+          },
+          "query": "SELECT (SUM(lbuy)+SUM(lsell))/4 FROM aggr_5m.trades_5m WHERE market =~ /(?i)^(BINANCE_FUTURES:${asset}usdt|BYBIT:${asset}USDT|OKEX:${asset}-USDT-SWAP|BITGET:${asset}USDT)$/ AND $timeFilter GROUP BY time(5m) fill(0)",
+          "rawQuery": true,
+          "resultFormat": "time_series",
+          "refId": "A",
+          "alias": ""
+        }
+      ],
+      "gridPos": {
+        "x": 0,
+        "y": 27,
+        "w": 12,
+        "h": 9
+      },
+      "description": "Observed liquidation stream notional divided by four configured reporting venues. Missing venue bars can understate it; inspect coverage.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "decimals": 2
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 11,
+      "title": "Observed liquidation per $1m traded · 5m",
+      "type": "timeseries",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "aggr-parallax-influxql"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "aggr-parallax-influxql"
+          },
+          "query": "SELECT 1000000*(SUM(lbuy)+SUM(lsell))/(SUM(vbuy)+SUM(vsell)) FROM aggr_5m.trades_5m WHERE market =~ /(?i)^(BINANCE_FUTURES:${asset}usdt|BYBIT:${asset}USDT|OKEX:${asset}-USDT-SWAP|BITGET:${asset}USDT)$/ AND $timeFilter GROUP BY time(5m) fill(0)",
+          "rawQuery": true,
+          "resultFormat": "time_series",
+          "refId": "A",
+          "alias": ""
+        }
+      ],
+      "gridPos": {
+        "x": 12,
+        "y": 27,
+        "w": 12,
+        "h": 9
+      },
+      "description": "Ratio uses the same four reporting venues in numerator and denominator; it is a reported-stream intensity signal.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "decimals": 2
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 12,
+      "title": "Liquidation venue bar coverage · expected 4",
+      "type": "timeseries",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "aggr-parallax-influxql"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "aggr-parallax-influxql"
+          },
+          "query": "SELECT COUNT(close) FROM aggr_5m.trades_5m WHERE market =~ /(?i)^(BINANCE_FUTURES:${asset}usdt|BYBIT:${asset}USDT|OKEX:${asset}-USDT-SWAP|BITGET:${asset}USDT)$/ AND $timeFilter GROUP BY time(5m) fill(0)",
+          "rawQuery": true,
+          "resultFormat": "time_series",
+          "refId": "A",
+          "alias": ""
+        }
+      ],
+      "gridPos": {
+        "x": 0,
+        "y": 36,
+        "w": 8,
+        "h": 7
+      },
+      "description": "A value below four means at least one configured reporting venue has no trade bar in this window.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 2
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 13,
+      "title": "Taker buy share · volume weighted",
+      "type": "timeseries",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "aggr-parallax-influxql"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "aggr-parallax-influxql"
+          },
+          "query": "SELECT 100*SUM(vbuy)/(SUM(vbuy)+SUM(vsell)) FROM aggr_5m.trades_5m WHERE market =~ /(?i)^(BINANCE_FUTURES:${asset}usdt|BYBIT:${asset}USDT|OKEX:${asset}-USDT-SWAP|BITGET:${asset}USDT|HYPERLIQUID:${asset})$/ AND $timeFilter GROUP BY time(5m) fill(null)",
+          "rawQuery": true,
+          "resultFormat": "time_series",
+          "refId": "A",
+          "alias": ""
+        }
+      ],
+      "gridPos": {
+        "x": 8,
+        "y": 36,
+        "w": 8,
+        "h": 7
+      },
+      "description": "Buy-side quote notional divided by all trade notional across five large perps; this is naturally weighted by turnover.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 2
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 14,
+      "title": "Composite close proxy · volume weighted",
+      "type": "timeseries",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "aggr-parallax-influxql"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "aggr-parallax-influxql"
+          },
+          "query": "SELECT SUM(pxv)/SUM(vol) FROM (SELECT close*(vbuy+vsell) AS pxv, vbuy+vsell AS vol FROM aggr_5m.trades_5m WHERE market =~ /(?i)^(BINANCE_FUTURES:${asset}usdt|BYBIT:${asset}USDT|OKEX:${asset}-USDT-SWAP|BITGET:${asset}USDT|HYPERLIQUID:${asset})$/ AND $timeFilter) GROUP BY time(5m) fill(none)",
+          "rawQuery": true,
+          "resultFormat": "time_series",
+          "refId": "A",
+          "alias": ""
+        }
+      ],
+      "gridPos": {
+        "x": 16,
+        "y": 36,
+        "w": 8,
+        "h": 7
+      },
+      "description": "Five-minute venue closes weighted by their five-minute quote turnover. This is a close proxy, not execution VWAP.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "decimals": 2
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 15,
+      "title": "Next analyses",
+      "type": "text",
+      "gridPos": {
+        "x": 0,
+        "y": 43,
+        "w": 24,
+        "h": 5
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "**Useful once history accumulates:** (1) compare changes in four-venue open interest with the composite close proxy to distinguish new-position buildup from closing; (2) compare liquidation intensity with taker buy share, keeping venue coverage visible; (3) watch the spread between each venue close and the volume-weighted close proxy as an execution-quality signal. These are exploratory signals, not certified trade-level VWAP or complete liquidation totals."
+      }
+    }
+  ]
+}

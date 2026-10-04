@@ -9,6 +9,8 @@ see [release status](RELEASE_STATUS.md) before treating a market as certified.
 ## Grafana and query path
 
 - Market-data Grafana: [Snowgraf](http://192.168.10.208:32161/), namespace `monitor`.
+- Dedicated dashboard: [Aggr Parallax — BTC / ETH / SOL feed](http://192.168.10.208:32161/d/aggr-parallax-feed/aggr-parallax-e28094-btc-eth-sol-feed),
+  in the **Aggr Parallax Feed** folder. Choose BTC, ETH, or SOL at the top.
 - Data source: **Aggr Parallax (InfluxQL)**, UID `aggr-parallax-influxql`.
 - InfluxDB service: `aggr-parallax-influx.ai-bot-feeder.svc.cluster.local:8086`.
 - Database: `aggr_parallax`; query language: InfluxQL. Grafana's server proxies
@@ -89,7 +91,7 @@ measurement has the `market` tag and these fields:
 | `open`, `high`, `low`, `close` | Execution price OHLC ordered by native event time and deterministic trade identity. |
 | `cbuy`, `csell` | Taker-buy and taker-sell execution counts; a native aggregate contributes its underlying count when exposed. |
 | `vbuy`, `vsell` | Taker-buy and taker-sell **quote notional**: execution price × normalized base quantity. The quote unit follows the product's USD, USDT, or USDC price denomination. |
-| `lbuy`, `lsell` | Liquidation quote notional where the venue provides liquidation events; absent fields mean none was written for that point. |
+| `lbuy`, `lsell` | Observed liquidation-stream quote notional where the venue provides events; absent fields mean none was written for that point. Exchange streams can be sampled or incomplete, so these fields are not a certified total of all liquidations. |
 
 | Retention policy | Measurement | Interval | Retention |
 | --- | --- | --- | --- |
@@ -117,3 +119,53 @@ The service's `/health/feeds` endpoint reports each market's current
 subscription state, last trade, recent interval quality, pending writes, and
 unresolved gaps. `writer_settled` means Influx point and rollups were written;
 the 24-hour independent exchange validation is a separate release gate.
+
+## Open interest snapshots
+
+The separate [`aggr-parallax-open-interest` CronJob](../deploy/open-interest.yaml)
+samples BTC, ETH, and SOL every five minutes from these linear perpetual
+markets:
+
+| Venue | BTC market | ETH market | SOL market |
+| --- | --- | --- | --- |
+| Binance USDⓈ-M | `BINANCE_FUTURES:btcusdt` | `BINANCE_FUTURES:ethusdt` | `BINANCE_FUTURES:solusdt` |
+| Bybit | `BYBIT:BTCUSDT` | `BYBIT:ETHUSDT` | `BYBIT:SOLUSDT` |
+| OKX | `OKEX:BTC-USDT-SWAP` | `OKEX:ETH-USDT-SWAP` | `OKEX:SOL-USDT-SWAP` |
+| Hyperliquid | `HYPERLIQUID:BTC` | `HYPERLIQUID:ETH` | `HYPERLIQUID:SOL` |
+
+These are **12 snapshot series**, separate from
+the 66 trade markets. Collection started on 4 October 2026 at about
+23:25 AEDT (12:25 UTC); older open interest is not backfilled.
+
+| Measurement in `aggr_5m` | Tags | Fields | Retention |
+| --- | --- | --- | --- |
+| `open_interest` | `asset`, `venue`, exact `market` | `base` (one-sided open contracts in base units), `notional_usd` (nominal USD equivalent), `mark_price`, `source_time_ms` | 90 days |
+| `open_interest_total` | `asset` | `notional_usd` (sum of all four selected venues), `venues` (= 4) | 90 days |
+
+Binance and Hyperliquid notional use base open interest × venue mark price;
+Bybit supplies its **single-side** open-interest value and OKX supplies `oiUsd`.
+Bybit's similarly named `openInterest` and `openInterestValue` count both
+sides and are intentionally excluded from the total. The cross
+venue total treats USDT- and USDC-denominated values as nominal USD equivalents
+without an FX or stablecoin depeg adjustment. A total point is written only
+when all four venue snapshots for that asset pass validation. It counts open
+contracts once, rather than adding long and short sides. A missed sample leaves
+a gap; it is not forward-filled. The sampler uses the same 350 GiB InfluxDB
+dataset and the existing 90-day `aggr_5m` retention policy.
+The Influx timestamp marks the start of the five-minute sampling bucket;
+`source_time_ms` retains the venue's source timestamp when supplied. See
+[Bybit's open interest field definitions](https://bybit-exchange.github.io/docs/v5/market/open-interest),
+[Binance's futures market-data API](https://developers.binance.com/en/docs/catalog/core-trading-derivatives-trading-usd-s-m-futures/api/rest-api/market-data),
+[OKX public data](https://www.okx.com/docs-v5/en/), and
+[Hyperliquid asset contexts](https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api/info-endpoint/perpetuals).
+
+The dashboard's **taker buy share** is `Σvbuy / (Σvbuy + Σvsell)` across five
+large linear perpetual markets, naturally weighted by quote turnover. Its
+**composite close proxy** is `Σ(close × five-minute quote turnover) / Σ(turnover)`;
+it is not trade-level VWAP. The liquidation mean divides observed notional by
+four reporting markets (Binance, Bybit, OKX, Bitget) and has a separate market
+bar coverage panel. Binance's `forceOrder` stream publishes only a selected
+liquidation order per symbol in each one-second window, so the liquidation
+panels are a **reported-stream signal**, not a full venue reconciliation.
+See [Binance's liquidation stream specification in its connector](https://github.com/binance/binance-futures-connector-python/blob/main/binance/websocket/um_futures/websocket_client.py)
+for its one-order-per-symbol-per-second snapshot limit.

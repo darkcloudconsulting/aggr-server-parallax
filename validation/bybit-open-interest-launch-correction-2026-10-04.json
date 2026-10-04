@@ -1,0 +1,18 @@
+{
+  "date": "2026-10-04",
+  "reason": "The first sampler used Bybit's both-side openInterest and openInterestValue fields. Its singleOpenInterest and singleOpenInterestValue fields are the comparable one-sided values.",
+  "source": "https://bybit-exchange.github.io/docs/v5/market/open-interest",
+  "affectedBucketsUtc": ["2026-10-04T12:25:00Z", "2026-10-04T12:30:00Z"],
+  "affectedAssets": ["BTC", "ETH", "SOL"],
+  "repair": "Halved the six Bybit base and notional points and subtracted half their former notional from the six four-venue total points at the same Influx timestamps. Preserved the other venue points and source timestamps.",
+  "verification": {
+    "bybitLiveBothToSingleRatios": { "BTC": 2.0, "ETH": 2.0, "SOL": "approximately 2.0 (published rounding)" },
+    "correctedBybitAndTotalPoints": 12,
+    "readbackMatched": true,
+    "fixedSamplerCheck": "The 12:35 UTC job wrote 12 venue points and three complete totals using single-side Bybit fields."
+  },
+  "correctedTotalNotionalUsd": {
+    "2026-10-04T12:25:00Z": { "BTC": 16484189651.754747, "ETH": 12268213147.30616, "SOL": 2418550715.406844 },
+    "2026-10-04T12:30:00Z": { "BTC": 16482273879.4178, "ETH": 12264780495.265123, "SOL": 2419183288.4282002 }
+  }
+}
