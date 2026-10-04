@@ -1,6 +1,6 @@
 # Parallax feed release status — 2026-10-04
 
-Status: **DEPLOYMENT IN PROGRESS; 24-HOUR PARALLEL VALIDATION PENDING**.
+Status: **PARALLEL FEED LIVE; 24-HOUR VALIDATION PENDING**.
 
 This feed starts a new history. No bars are migrated or backfilled from the
 existing snow or SOL collectors. The original deployments and their data must
@@ -21,7 +21,7 @@ An empty 25-second window is **not** evidence of an outage.
 | Coinbase spot | `BTC-USD`, `ETH-USD`, `SOL-USD` | 3/3 | INTX perps excluded below. |
 | Kraken spot | `XBT/USD`, `ETH/USD`, `SOL/USD` | 3/3 | Spot uses v2 trade IDs; local XBT identity retained. |
 | Kraken futures | `PF_XBTUSD`, `PF_ETHUSD`, `PF_SOLUSD` | 3/3 | `PI_XBTUSD` excluded below. |
-| OKX spot | `BTC-USDT`, `ETH-USDT`, `SOL-USDT` | 3/3 | Native trade ID recovery. |
+| OKX spot | `BTC-USDT`, `ETH-USDT`, `SOL-USDT` | 3/3 | `trades-all` supplies individual executions; native trade ID recovery. |
 | OKX linear swaps | `BTC-USDT-SWAP`, `ETH-USDT-SWAP`, `SOL-USDT-SWAP` | 3/3 | Contract metadata controls size conversion. |
 | OKX inverse swaps | `BTC-USD-SWAP`, `ETH-USD-SWAP`, `SOL-USD-SWAP` | 1/3 | Two contracts quiet in probe; validate against REST. |
 | Bybit spot | `BTCUSDT-SPOT`, `ETHUSDT-SPOT`, `SOLUSDT-SPOT` | 3/3 | Separate spot socket. |
@@ -87,6 +87,34 @@ unresolved recovery or data issues, and recent interval finality. A missing bar
 means there was no accepted trade in that interval. `writer_settled` means the
 point and rollups were written with no known gap; exchange reconciliation is a
 separate validation gate.
+
+## Live deployment checkpoint
+
+At 2026-10-04 09:26 UTC, InfluxDB and the application were Ready on
+`snow-node-200`, all 63 markets were connected and had emitted a trade, InfluxDB
+1.12.4 had created all 12 configured retention policies, and recent one-minute
+bars were queryable. The pool was ONLINE with 2.91 TiB total, project quota
+500 GiB, Influx quota 350 GiB, and journal quota 150 GiB. Node-200 remained
+cordoned. Pre- and post-deployment snapshots showed unchanged deployment and
+pod specifications, image IDs, and Ready status for `aggr-server-snow` and
+`aggr-server-sol`.
+
+The 24-hour soak Job began at **2026-10-04 09:26:11 UTC** and writes a sample
+every five minutes to `/srv/aggr-parallax/journal/soak-2026-10-04.jsonl`.
+Its first sample had 63 connected markets, 63 markets with a settled interval,
+no unresolved gaps, and a successful Influx query. Completion is expected
+after **2026-10-05 09:26:11 UTC**.
+
+The first native REST check matched Binance spot, Binance futures, Coinbase
+spot, Kraken spot, Bybit linear, Crypto.com spot, Bitfinex spot, Bitstamp spot,
+and KuCoin spot by trade ID, count, side, base quantity, price, and timestamp.
+It exposed a real OKX mismatch: the old `trades` socket aggregated fills while
+REST returned individual trades. The connector now uses the public
+`trades-all` channel on the business socket; its subscription ACK and live
+trade frames were confirmed by a new probe. Bitget's REST recent-fill limit
+is 100; that was corrected and two short busy windows matched by ID and
+quantity. Longer gaps beyond that REST depth are recorded as unresolved.
+These changes require a new image and post-rollout reconciliation before PASS.
 
 ## Remaining release gate
 

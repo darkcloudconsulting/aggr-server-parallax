@@ -1,5 +1,8 @@
 const Exchange = require('../exchange')
 const axios = require('axios')
+const WebSocket = require('websocket').w3cwebsocket
+
+const PUBLIC_WS = 'wss://ws.okx.com/ws/v5/public'
 
 class Okex extends Exchange {
   constructor() {
@@ -19,7 +22,7 @@ class Okex extends Exchange {
     this.liquidationProducts = []
     this.liquidationProductsReferences = {}
 
-    this.url = 'wss://ws.okx.com:8443/ws/v5/public'
+    this.url = 'wss://ws.okx.com/ws/v5/business'
   }
 
   formatProducts(response) {
@@ -93,7 +96,7 @@ class Okex extends Exchange {
         op: 'subscribe',
         args: [
           {
-            channel: 'trades',
+            channel: 'trades-all',
             instId: pair
           }
         ]
@@ -101,20 +104,8 @@ class Okex extends Exchange {
     )
 
     if (this.types[pair] !== 'SPOT') {
-      api._liquidationTypes ||= new Set()
-      if (api._liquidationTypes.has(this.types[pair])) return
-      api.send(
-        JSON.stringify({
-          op: 'subscribe',
-          args: [
-            {
-              channel: 'liquidation-orders',
-              instType: this.types[pair]
-            }
-          ]
-        })
-      )
-      api._liquidationTypes.add(this.types[pair])
+      this.openLiquidationApi(api)
+      this.subscribeLiquidations(api, this.types[pair])
     }
   }
 
@@ -133,16 +124,17 @@ class Okex extends Exchange {
         op: 'unsubscribe',
         args: [
           {
-            channel: 'trades',
+            channel: 'trades-all',
             instId: pair
           }
         ]
       })
     )
 
-    if (this.types[pair] !== 'SPOT' && api._liquidationTypes &&
+    if (this.types[pair] !== 'SPOT' && api._liquidationApi &&
+        api._liquidationApi.readyState === WebSocket.OPEN && api._liquidationTypes &&
         !api._connected.some(connected => this.types[connected] === this.types[pair])) {
-      api.send(
+      api._liquidationApi.send(
         JSON.stringify({
           op: 'unsubscribe',
           args: [
@@ -155,6 +147,39 @@ class Okex extends Exchange {
       )
       api._liquidationTypes.delete(this.types[pair])
     }
+  }
+
+  openLiquidationApi(api) {
+    if (api._liquidationApi && (api._liquidationApi.readyState === WebSocket.OPEN ||
+      api._liquidationApi.readyState === WebSocket.CONNECTING)) return
+    api._liquidationApiClosing = false
+    api._liquidationTypes = new Set()
+    api._liquidationApi = new WebSocket(PUBLIC_WS)
+    api._liquidationApi.onopen = () => {
+      for (const pair of api._connected) {
+        if (this.types[pair] !== 'SPOT') this.subscribeLiquidations(api, this.types[pair])
+      }
+    }
+    api._liquidationApi.onmessage = event => this.onMessage(event, api)
+    api._liquidationApi.onclose = () => {
+      api._liquidationApi = null
+      api._liquidationTypes.clear()
+      if (!api._liquidationApiClosing && api.readyState === WebSocket.OPEN) this.openLiquidationApi(api)
+    }
+  }
+
+  subscribeLiquidations(api, type) {
+    if (!api._liquidationApi || api._liquidationApi.readyState !== WebSocket.OPEN ||
+        api._liquidationTypes.has(type)) return
+    api._liquidationApi.send(JSON.stringify({ op: 'subscribe', args: [
+      { channel: 'liquidation-orders', instType: type }
+    ] }))
+    api._liquidationTypes.add(type)
+  }
+
+  onApiRemoved(api) {
+    api._liquidationApiClosing = true
+    if (api._liquidationApi) api._liquidationApi.close()
   }
 
   onMessage(event, api) {

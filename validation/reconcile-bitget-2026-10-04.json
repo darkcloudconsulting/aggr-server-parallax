@@ -1,0 +1,36 @@
+{
+  "startedAt": "2026-10-04T09:32:20.637Z",
+  "markets": {
+    "BITGET:BTCUSDT": {
+      "from": 1791106338489,
+      "to": 1791106338989,
+      "native": 1,
+      "journal": 1,
+      "missing": [],
+      "extra": [],
+      "differences": [],
+      "status": "MATCH"
+    },
+    "BITGET:BTCUSDT-SPOT": {
+      "from": 1791106338829,
+      "to": 1791106339329,
+      "native": 1,
+      "journal": 1,
+      "missing": [],
+      "extra": [],
+      "differences": [],
+      "status": "MATCH"
+    },
+    "BITGET:BTCUSD": {
+      "from": 1791106339185,
+      "to": 1791106339685,
+      "native": 0,
+      "journal": 0,
+      "missing": [],
+      "extra": [],
+      "differences": [],
+      "status": "QUIET_UNVERIFIED"
+    }
+  },
+  "finishedAt": "2026-10-04T09:32:22.555Z"
+}

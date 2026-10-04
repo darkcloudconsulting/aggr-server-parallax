@@ -252,7 +252,7 @@ class Bitget extends Exchange {
     const type = this.types[range.pair]
     const symbol = this.formatLocalToRemotePair(range.pair, type)
     const response = await axios.get('https://api.bitget.com/api/v3/market/fills', {
-      params: { category: type.toUpperCase(), symbol, limit: 1000 }
+      params: { category: type.toUpperCase(), symbol, limit: 100 }
     })
     if (response.data.code !== '00000' || !Array.isArray(response.data.data)) {
       throw new Error(`Bitget fills rejected: ${response.data.msg || response.data.code}`)

@@ -1,0 +1,210 @@
+{
+  "startedAt": "2026-10-04T09:28:11.717Z",
+  "markets": {
+    "BINANCE:btcusdt": {
+      "from": 1791106081226,
+      "to": 1791106086226,
+      "native": 80,
+      "journal": 80,
+      "missing": [],
+      "extra": [],
+      "differences": [],
+      "status": "MATCH"
+    },
+    "BINANCE_FUTURES:btcusdt": {
+      "from": 1791106085069,
+      "to": 1791106090069,
+      "native": 18,
+      "journal": 18,
+      "missing": [],
+      "extra": [],
+      "differences": [],
+      "status": "MATCH"
+    },
+    "COINBASE:BTC-USD": {
+      "from": 1791106086210,
+      "to": 1791106091210,
+      "native": 7,
+      "journal": 7,
+      "missing": [],
+      "extra": [],
+      "differences": [],
+      "status": "MATCH"
+    },
+    "KRAKEN:XBT/USD": {
+      "from": 1791106088029,
+      "to": 1791106093029,
+      "native": 5,
+      "journal": 5,
+      "missing": [],
+      "extra": [],
+      "differences": [],
+      "status": "MATCH"
+    },
+    "OKEX:BTC-USDT": {
+      "from": 1791106089255,
+      "to": 1791106094255,
+      "native": 73,
+      "journal": 28,
+      "missing": [
+        "1066267976",
+        "1066267975",
+        "1066267974",
+        "1066267973",
+        "1066267972",
+        "1066267971",
+        "1066267970",
+        "1066267969",
+        "1066267968",
+        "1066267967"
+      ],
+      "extra": [],
+      "differences": [
+        {
+          "id": "1066267977",
+          "fields": [
+            "baseSize",
+            "executions"
+          ]
+        },
+        {
+          "id": "1066267959",
+          "fields": [
+            "baseSize",
+            "executions"
+          ]
+        },
+        {
+          "id": "1066267956",
+          "fields": [
+            "baseSize",
+            "executions"
+          ]
+        },
+        {
+          "id": "1066267954",
+          "fields": [
+            "baseSize",
+            "executions"
+          ]
+        },
+        {
+          "id": "1066267951",
+          "fields": [
+            "baseSize",
+            "executions"
+          ]
+        },
+        {
+          "id": "1066267946",
+          "fields": [
+            "baseSize",
+            "executions"
+          ]
+        },
+        {
+          "id": "1066267941",
+          "fields": [
+            "baseSize",
+            "executions"
+          ]
+        },
+        {
+          "id": "1066267939",
+          "fields": [
+            "baseSize",
+            "executions"
+          ]
+        },
+        {
+          "id": "1066267937",
+          "fields": [
+            "baseSize",
+            "executions"
+          ]
+        },
+        {
+          "id": "1066267934",
+          "fields": [
+            "baseSize",
+            "executions"
+          ]
+        }
+      ],
+      "status": "MISMATCH"
+    },
+    "BYBIT:BTCUSDT": {
+      "from": 1791106091479,
+      "to": 1791106096479,
+      "native": 222,
+      "journal": 222,
+      "missing": [],
+      "extra": [],
+      "differences": [],
+      "status": "MATCH"
+    },
+    "BITGET:BTCUSDT": {
+      "from": 1791106093030,
+      "to": 1791106098030,
+      "recoveryError": "Request failed with status code 400",
+      "native": 0,
+      "journal": 76,
+      "missing": [],
+      "extra": [
+        "1490572480294436864",
+        "1490572480294436866",
+        "1490572480936165376",
+        "1490572482588721152",
+        "1490572483222061056",
+        "1490572483222061058",
+        "1490572483222061060",
+        "1490572483222061062",
+        "1490572483222061064",
+        "1490572483222061066"
+      ],
+      "differences": [],
+      "status": "MISMATCH"
+    },
+    "CRYPTOCOM:BTC_USD": {
+      "from": 1791106093964,
+      "to": 1791106098964,
+      "native": 11,
+      "journal": 11,
+      "missing": [],
+      "extra": [],
+      "differences": [],
+      "status": "MATCH"
+    },
+    "BITFINEX:BTCUSD": {
+      "from": 1791106095243,
+      "to": 1791106100243,
+      "native": 18,
+      "journal": 18,
+      "missing": [],
+      "extra": [],
+      "differences": [],
+      "status": "MATCH"
+    },
+    "BITSTAMP:btcusd": {
+      "from": 1791106096962,
+      "to": 1791106101962,
+      "native": 6,
+      "journal": 6,
+      "missing": [],
+      "extra": [],
+      "differences": [],
+      "status": "MATCH"
+    },
+    "KUCOIN:BTC-USDT": {
+      "from": 1791106101281,
+      "to": 1791106106281,
+      "native": 4,
+      "journal": 4,
+      "missing": [],
+      "extra": [],
+      "differences": [],
+      "status": "MATCH"
+    }
+  },
+  "finishedAt": "2026-10-04T09:28:39.618Z"
+}
