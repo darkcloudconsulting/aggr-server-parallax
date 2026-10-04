@@ -1,0 +1,19 @@
+{
+  "checkedAt": "2026-10-04T09:54:00Z",
+  "market": "OKEX:BTC-USDT",
+  "replayedRange": ["2026-10-04T09:22:00Z", "2026-10-04T09:47:00Z"],
+  "tenSecondBucket": {
+    "time": "2026-10-04T09:30:00Z",
+    "journalExecutions": 6,
+    "journal": { "cbuy": 1, "csell": 5, "open": 85264.5, "high": 85265.2, "low": 85264.5, "close": 85265.2 },
+    "influxMatched": true
+  },
+  "oneMinuteBucket": {
+    "time": "2026-10-04T09:30:00Z",
+    "journalExecutions": 310,
+    "journal": { "cbuy": 216, "csell": 94, "open": 85264.5, "high": 85290.3, "low": 85264.5, "close": 85269.8 },
+    "influxMatched": true
+  },
+  "allNineInitialAggregateIssuesResolved": true,
+  "scope": "Only the new Parallax launch history was repaired."
+}

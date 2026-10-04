@@ -1,0 +1,480 @@
+{
+  "startedAt": "2026-10-04T09:39:39.091Z",
+  "markets": {
+    "BINANCE:btcusdt": {
+      "from": 1791106765039,
+      "to": 1791106770039,
+      "native": 12,
+      "journal": 12,
+      "missing": [],
+      "extra": [],
+      "differences": [],
+      "status": "MATCH"
+    },
+    "BINANCE:ethusdt": {
+      "from": 1791106765512,
+      "to": 1791106770512,
+      "native": 4,
+      "journal": 4,
+      "missing": [],
+      "extra": [],
+      "differences": [],
+      "status": "MATCH"
+    },
+    "BINANCE:solusdt": {
+      "from": 1791106765977,
+      "to": 1791106770977,
+      "native": 4,
+      "journal": 4,
+      "missing": [],
+      "extra": [],
+      "differences": [],
+      "status": "MATCH"
+    },
+    "BINANCE_FUTURES:btcusdt": {
+      "from": 1791106769519,
+      "to": 1791106774519,
+      "native": 14,
+      "journal": 14,
+      "missing": [],
+      "extra": [],
+      "differences": [],
+      "status": "MATCH"
+    },
+    "BINANCE_FUTURES:ethusdt": {
+      "from": 1791106769841,
+      "to": 1791106774841,
+      "native": 6,
+      "journal": 6,
+      "missing": [],
+      "extra": [],
+      "differences": [],
+      "status": "MATCH"
+    },
+    "BINANCE_FUTURES:solusdt": {
+      "from": 1791106770151,
+      "to": 1791106775151,
+      "native": 9,
+      "journal": 9,
+      "missing": [],
+      "extra": [],
+      "differences": [],
+      "status": "MATCH"
+    },
+    "BINANCE_FUTURES:btcusd_perp": {
+      "from": 1791106770478,
+      "to": 1791106775478,
+      "native": 0,
+      "journal": 0,
+      "missing": [],
+      "extra": [],
+      "differences": [],
+      "status": "QUIET_UNVERIFIED"
+    },
+    "BINANCE_FUTURES:ethusd_perp": {
+      "from": 1791106770955,
+      "to": 1791106775955,
+      "native": 0,
+      "journal": 0,
+      "missing": [],
+      "extra": [],
+      "differences": [],
+      "status": "QUIET_UNVERIFIED"
+    },
+    "BINANCE_FUTURES:solusd_perp": {
+      "from": 1791106771457,
+      "to": 1791106776457,
+      "native": 0,
+      "journal": 0,
+      "missing": [],
+      "extra": [],
+      "differences": [],
+      "status": "QUIET_UNVERIFIED"
+    },
+    "COINBASE:BTC-USD": {
+      "from": 1791106773127,
+      "to": 1791106778127,
+      "native": 3,
+      "journal": 3,
+      "missing": [],
+      "extra": [],
+      "differences": [],
+      "status": "MATCH"
+    },
+    "COINBASE:ETH-USD": {
+      "from": 1791106773608,
+      "to": 1791106778608,
+      "native": 1,
+      "journal": 1,
+      "missing": [],
+      "extra": [],
+      "differences": [],
+      "status": "MATCH"
+    },
+    "COINBASE:SOL-USD": {
+      "from": 1791106775562,
+      "to": 1791106780562,
+      "native": 0,
+      "journal": 0,
+      "missing": [],
+      "extra": [],
+      "differences": [],
+      "status": "QUIET_UNVERIFIED"
+    },
+    "KRAKEN:XBT/USD": {
+      "from": 1791106777643,
+      "to": 1791106782643,
+      "native": 4,
+      "journal": 4,
+      "missing": [],
+      "extra": [],
+      "differences": [],
+      "status": "MATCH"
+    },
+    "KRAKEN:ETH/USD": {
+      "from": 1791106778746,
+      "to": 1791106783746,
+      "native": 1,
+      "journal": 1,
+      "missing": [],
+      "extra": [],
+      "differences": [],
+      "status": "MATCH"
+    },
+    "KRAKEN:SOL/USD": {
+      "from": 1791106779855,
+      "to": 1791106784855,
+      "native": 1,
+      "journal": 1,
+      "missing": [],
+      "extra": [],
+      "differences": [],
+      "status": "MATCH"
+    },
+    "KRAKEN:PF_XBTUSD": {
+      "from": 1791106780940,
+      "to": 1791106785940,
+      "native": 2,
+      "journal": 2,
+      "missing": [],
+      "extra": [],
+      "differences": [],
+      "status": "MATCH"
+    },
+    "KRAKEN:PF_ETHUSD": {
+      "from": 1791106782010,
+      "to": 1791106787010,
+      "native": 0,
+      "journal": 0,
+      "missing": [],
+      "extra": [],
+      "differences": [],
+      "status": "QUIET_UNVERIFIED"
+    },
+    "KRAKEN:PF_SOLUSD": {
+      "from": 1791106782599,
+      "to": 1791106787599,
+      "native": 0,
+      "journal": 0,
+      "missing": [],
+      "extra": [],
+      "differences": [],
+      "status": "QUIET_UNVERIFIED"
+    },
+    "BYBIT:BTCUSDT-SPOT": {
+      "from": 1791106785109,
+      "to": 1791106790109,
+      "native": 3,
+      "journal": 123,
+      "missing": [],
+      "extra": [
+        "2290000001223463101",
+        "2290000001223463102",
+        "2290000001223463103",
+        "2290000001223463104",
+        "2290000001223463105",
+        "2290000001223463106",
+        "2290000001223463107",
+        "2290000001223463108",
+        "2290000001223463109",
+        "2290000001223463110"
+      ],
+      "differences": [],
+      "status": "MISMATCH"
+    },
+    "BYBIT:ETHUSDT-SPOT": {
+      "from": 1791106785523,
+      "to": 1791106790523,
+      "native": 39,
+      "journal": 72,
+      "missing": [],
+      "extra": [
+        "2280000001774964183",
+        "2280000001774964184",
+        "2280000001774964186",
+        "2280000001774964187",
+        "2280000001774964188",
+        "2280000001774964189",
+        "2280000001774964190",
+        "2280000001774964191",
+        "2280000001774964192",
+        "2280000001774964193"
+      ],
+      "differences": [],
+      "status": "MISMATCH"
+    },
+    "BYBIT:SOLUSDT-SPOT": {
+      "from": 1791106785918,
+      "to": 1791106790918,
+      "native": 10,
+      "journal": 10,
+      "missing": [],
+      "extra": [],
+      "differences": [],
+      "status": "MATCH"
+    },
+    "BYBIT:BTCUSDT": {
+      "from": 1791106786339,
+      "to": 1791106791339,
+      "native": 88,
+      "journal": 88,
+      "missing": [],
+      "extra": [],
+      "differences": [],
+      "status": "MATCH"
+    },
+    "BYBIT:ETHUSDT": {
+      "from": 1791106786793,
+      "to": 1791106791793,
+      "native": 223,
+      "journal": 223,
+      "missing": [],
+      "extra": [],
+      "differences": [],
+      "status": "MATCH"
+    },
+    "BYBIT:SOLUSDT": {
+      "from": 1791106787238,
+      "to": 1791106792238,
+      "native": 54,
+      "journal": 54,
+      "missing": [],
+      "extra": [],
+      "differences": [],
+      "status": "MATCH"
+    },
+    "BYBIT:BTCUSD": {
+      "from": 1791106787705,
+      "to": 1791106792705,
+      "native": 1,
+      "journal": 1,
+      "missing": [],
+      "extra": [],
+      "differences": [],
+      "status": "MATCH"
+    },
+    "BYBIT:ETHUSD": {
+      "from": 1791106788121,
+      "to": 1791106793121,
+      "native": 0,
+      "journal": 0,
+      "missing": [],
+      "extra": [],
+      "differences": [],
+      "status": "QUIET_UNVERIFIED"
+    },
+    "BYBIT:SOLUSD": {
+      "from": 1791106788519,
+      "to": 1791106793519,
+      "native": 0,
+      "journal": 0,
+      "missing": [],
+      "extra": [],
+      "differences": [],
+      "status": "QUIET_UNVERIFIED"
+    },
+    "CRYPTOCOM:BTC_USD": {
+      "from": 1791106789442,
+      "to": 1791106794442,
+      "native": 8,
+      "journal": 8,
+      "missing": [],
+      "extra": [],
+      "differences": [],
+      "status": "MATCH"
+    },
+    "CRYPTOCOM:ETH_USD": {
+      "from": 1791106790259,
+      "to": 1791106795259,
+      "native": 0,
+      "journal": 0,
+      "missing": [],
+      "extra": [],
+      "differences": [],
+      "status": "QUIET_UNVERIFIED"
+    },
+    "CRYPTOCOM:SOL_USD": {
+      "from": 1791106790623,
+      "to": 1791106795623,
+      "native": 2,
+      "journal": 2,
+      "missing": [],
+      "extra": [],
+      "differences": [],
+      "status": "MATCH"
+    },
+    "CRYPTOCOM:BTCUSD-PERP": {
+      "from": 1791106791206,
+      "to": 1791106796206,
+      "native": 0,
+      "journal": 0,
+      "missing": [],
+      "extra": [],
+      "differences": [],
+      "status": "QUIET_UNVERIFIED"
+    },
+    "CRYPTOCOM:ETHUSD-PERP": {
+      "from": 1791106791548,
+      "to": 1791106796548,
+      "native": 1,
+      "journal": 1,
+      "missing": [],
+      "extra": [],
+      "differences": [],
+      "status": "MATCH"
+    },
+    "CRYPTOCOM:SOLUSD-PERP": {
+      "from": 1791106791981,
+      "to": 1791106796981,
+      "native": 0,
+      "journal": 0,
+      "missing": [],
+      "extra": [],
+      "differences": [],
+      "status": "QUIET_UNVERIFIED"
+    },
+    "BITFINEX:BTCUSD": {
+      "from": 1791106793158,
+      "to": 1791106798158,
+      "native": 4,
+      "journal": 4,
+      "missing": [],
+      "extra": [],
+      "differences": [],
+      "status": "MATCH"
+    },
+    "BITFINEX:ETHUSD": {
+      "from": 1791106793971,
+      "to": 1791106798971,
+      "native": 0,
+      "journal": 0,
+      "missing": [],
+      "extra": [],
+      "differences": [],
+      "status": "QUIET_UNVERIFIED"
+    },
+    "BITFINEX:SOLUSD": {
+      "from": 1791106795170,
+      "to": 1791106800170,
+      "native": 0,
+      "journal": 0,
+      "missing": [],
+      "extra": [],
+      "differences": [],
+      "status": "QUIET_UNVERIFIED"
+    },
+    "BITSTAMP:btcusd": {
+      "from": 1791106797487,
+      "to": 1791106802487,
+      "native": 0,
+      "journal": 1,
+      "missing": [],
+      "extra": [
+        "648804244"
+      ],
+      "differences": [],
+      "status": "MISMATCH"
+    },
+    "BITSTAMP:ethusd": {
+      "from": 1791106799528,
+      "to": 1791106804528,
+      "native": 0,
+      "journal": 0,
+      "missing": [],
+      "extra": [],
+      "differences": [],
+      "status": "QUIET_UNVERIFIED"
+    },
+    "BITSTAMP:solusd": {
+      "from": 1791106800168,
+      "to": 1791106805168,
+      "native": 0,
+      "journal": 0,
+      "missing": [],
+      "extra": [],
+      "differences": [],
+      "status": "QUIET_UNVERIFIED"
+    },
+    "KUCOIN:BTC-USDT": {
+      "from": 1791106801856,
+      "to": 1791106806856,
+      "native": 13,
+      "journal": 13,
+      "missing": [],
+      "extra": [],
+      "differences": [],
+      "status": "MATCH"
+    },
+    "KUCOIN:ETH-USDT": {
+      "from": 1791106802210,
+      "to": 1791106807210,
+      "native": 0,
+      "journal": 0,
+      "missing": [],
+      "extra": [],
+      "differences": [],
+      "status": "QUIET_UNVERIFIED"
+    },
+    "KUCOIN:SOL-USDT": {
+      "from": 1791106802588,
+      "to": 1791106807588,
+      "native": 0,
+      "journal": 0,
+      "missing": [],
+      "extra": [],
+      "differences": [],
+      "status": "QUIET_UNVERIFIED"
+    },
+    "KUCOIN:XBTUSDTM": {
+      "from": 1791106802990,
+      "to": 1791106807990,
+      "native": 1,
+      "journal": 1,
+      "missing": [],
+      "extra": [],
+      "differences": [],
+      "status": "MATCH"
+    },
+    "KUCOIN:ETHUSDTM": {
+      "from": 1791106803412,
+      "to": 1791106808412,
+      "native": 1,
+      "journal": 1,
+      "missing": [],
+      "extra": [],
+      "differences": [],
+      "status": "MATCH"
+    },
+    "KUCOIN:SOLUSDTM": {
+      "from": 1791106803792,
+      "to": 1791106808792,
+      "native": 3,
+      "journal": 3,
+      "missing": [],
+      "extra": [],
+      "differences": [],
+      "status": "MATCH"
+    }
+  },
+  "finishedAt": "2026-10-04T09:40:22.176Z"
+}

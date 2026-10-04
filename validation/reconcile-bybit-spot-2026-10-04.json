@@ -1,0 +1,36 @@
+{
+  "startedAt": "2026-10-04T09:53:32.879Z",
+  "markets": {
+    "BYBIT:BTCUSDT-SPOT": {
+      "from": 1791107608481,
+      "to": 1791107610481,
+      "native": 0,
+      "journal": 0,
+      "missing": [],
+      "extra": [],
+      "differences": [],
+      "status": "QUIET_UNVERIFIED"
+    },
+    "BYBIT:ETHUSDT-SPOT": {
+      "from": 1791107608914,
+      "to": 1791107610914,
+      "native": 6,
+      "journal": 6,
+      "missing": [],
+      "extra": [],
+      "differences": [],
+      "status": "MATCH"
+    },
+    "BYBIT:SOLUSDT-SPOT": {
+      "from": 1791107609333,
+      "to": 1791107611333,
+      "native": 0,
+      "journal": 0,
+      "missing": [],
+      "extra": [],
+      "differences": [],
+      "status": "QUIET_UNVERIFIED"
+    }
+  },
+  "finishedAt": "2026-10-04T09:53:35.784Z"
+}

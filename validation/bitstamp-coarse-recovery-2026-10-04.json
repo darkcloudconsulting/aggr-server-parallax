@@ -1,0 +1,24 @@
+{
+  "checkedAt": "2026-10-04T09:57:00Z",
+  "market": "BITSTAMP:btcusd",
+  "bucket": 1791107750000,
+  "nativeApi": "https://www.bitstamp.net/api/v2/transactions/btcusd/?time=day&limit=1000",
+  "nativeTimestampPrecision": "seconds",
+  "journalTimestampPrecision": "seconds for the three recovered events",
+  "nativeAndJournalMatched": true,
+  "trades": [
+    { "id": "648808571", "second": 1791107755, "price": 85245.37, "baseQuantity": 0.00005925, "side": "sell" },
+    { "id": "648808573", "second": 1791107756, "price": 85245.38, "baseQuantity": 0.00005924, "side": "buy" },
+    { "id": "648808576", "second": 1791107757, "price": 85245.37, "baseQuantity": 0.00005925, "side": "sell" }
+  ],
+  "otherNativeTradesInBucket": 0,
+  "nativeIdsAreInDistinctSeconds": true,
+  "result": "The 10-second bucket membership and OHLC order are unambiguous at the native API precision. The coarse_recovery_timestamp issue for this bucket was resolved after comparison; subsecond recovery time remains unavailable from this Bitstamp endpoint.",
+  "secondRestartCheck": {
+    "bucket": 1791108140000,
+    "nativeAndJournalMatched": true,
+    "otherNativeTradesInBucket": 0,
+    "trade": { "id": "648811777", "second": 1791108142, "price": 85230.03, "baseQuantity": 0.00005924, "side": "buy" },
+    "issueResolvedAfterComparison": true
+  }
+}

@@ -64,11 +64,11 @@ InfluxDB 3 Core is not a compatible target for this retention-policy and
 same-point correction design.
 
 The application build is published at GHCR digest
-`sha256:82894dfd4877a1a9162f25ce1afd66a3242d8bb0ef92e2bd4770234124ae979c`.
+`sha256:1e53141d81016bb926839eb1bd60983cfb682afafee7664c3a4994dcf826ce8a`.
 GHCR currently requires authentication for this package. An authenticated
 controller pulled that exact image, saved it, and imported it into node-200's
 `k8s.io` containerd namespace. The import produced the equivalent local OCI
-manifest digest `sha256:f9719501d5c5350d64fce52a798321cb354aa0a00aabea7f0885aad0a986ed3d`;
+manifest digest `sha256:25d861f9453f4fc396a293d225e2078bfe5f588229112510b0dc6661234e8066`;
 the deployment pins this local digest with `imagePullPolicy: Never`. Restarts
 on node-200 use that content without cluster credentials.
 
@@ -82,11 +82,13 @@ quantity and unit, trade ID, event time, normalized base size, and source are
 retained in the SQLite WAL journal for seven days. The journal deduplicates by
 native trade ID and orders equal-time trades by ID for deterministic OHLC.
 
-`/health/feeds` reports connection request state, last trade, journal writes,
+`/health/feeds` reports connection request state, trades observed on the current
+subscription, last trade, journal writes,
 unresolved recovery or data issues, and recent interval finality. A missing bar
 means there was no accepted trade in that interval. `writer_settled` means the
 point and rollups were written with no known gap; exchange reconciliation is a
-separate validation gate.
+separate validation gate. A historical trade recovered after a restart does not
+prove that the new websocket subscription has delivered a live trade.
 
 ## Live deployment checkpoint
 
@@ -99,11 +101,16 @@ cordoned. Pre- and post-deployment snapshots showed unchanged deployment and
 pod specifications, image IDs, and Ready status for `aggr-server-snow` and
 `aggr-server-sol`.
 
-The 24-hour soak Job began at **2026-10-04 09:26:11 UTC** and writes a sample
-every five minutes to `/srv/aggr-parallax/journal/soak-2026-10-04.jsonl`.
-Its first sample had 63 connected markets, 63 markets with a settled interval,
-no unresolved gaps, and a successful Influx query. Completion is expected
-after **2026-10-05 09:26:11 UTC**.
+The original soak and two short restart checks were superseded by subsequent
+connector and health fixes; their files remain on the journal dataset. The
+current 24-hour Job `aggr-parallax-soak-20261004-r4` began at
+**2026-10-04 10:03:58 UTC** and samples every five minutes into
+`/srv/aggr-parallax/journal/soak-2026-10-04-r4.jsonl`. Its first sample had
+63 connected markets, 63 with a settled interval, zero unresolved issues, and
+a successful Influx query. Completion is expected after
+**2026-10-05 10:03:58 UTC**. Just after the final restart, 62 subscriptions
+had delivered a live trade; thin `BITGET:SOLUSD` had an earlier trade but was
+still awaiting one on the new socket. This is not classified as an outage.
 
 The first native REST check matched Binance spot, Binance futures, Coinbase
 spot, Kraken spot, Bybit linear, Crypto.com spot, Bitfinex spot, Bitstamp spot,
@@ -114,7 +121,31 @@ REST returned individual trades. The connector now uses the public
 trade frames were confirmed by a new probe. Bitget's REST recent-fill limit
 is 100; that was corrected and two short busy windows matched by ID and
 quantity. Longer gaps beyond that REST depth are recorded as unresolved.
-These changes require a new image and post-rollout reconciliation before PASS.
+The corrected image is live. A bounded replay of Parallax's own launch window
+(`09:22–09:47 UTC`) replaced grouped OKX records with native executions and
+cleared all nine launch issues. An independently queried 09:30 OKX BTC spot
+10-second bar and its one-minute rollup matched the journal's execution counts
+and OHLC; see [`validation/okx-launch-bar-2026-10-04.json`](../validation/okx-launch-bar-2026-10-04.json).
+
+Across 45 other representative market windows, 25 matched native REST trade
+identity and values, 17 had no trade in the bounded window, and three initial
+comparisons were limited by Bybit spot's short recent-trade depth or
+Bitstamp's second-resolution REST timestamps. A subsequent Bybit ETH spot
+window matched six executions. The raw receipts are retained in
+[`validation/reconcile-other-markets-2026-10-04.json`](../validation/reconcile-other-markets-2026-10-04.json)
+and [`validation/reconcile-bybit-spot-2026-10-04.json`](../validation/reconcile-bybit-spot-2026-10-04.json).
+Bitstamp's two coarse recovery buckets after deployment restarts were compared
+event by event with its native API and cleared only after confirming complete
+10-second membership and unambiguous OHLC order; see
+[`validation/bitstamp-coarse-recovery-2026-10-04.json`](../validation/bitstamp-coarse-recovery-2026-10-04.json).
+The native API does not expose subsecond recovery timestamps, so any future
+coarse Bitstamp recovery remains flagged for independent validation.
+
+At 10:04 UTC, the ZFS pool was ONLINE with no known errors; project, Influx,
+and journal datasets used about 47 MiB, 23 MiB, and 24 MiB respectively within
+their 500/350/150 GiB quotas. Node-200 remained cordoned. The original snow
+and SOL deployment specs, pod UIDs, image IDs, and Ready status were unchanged
+after the final rollout.
 
 ## Remaining release gate
 
