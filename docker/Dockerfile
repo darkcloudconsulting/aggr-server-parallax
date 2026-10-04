@@ -1,30 +1,21 @@
-FROM  node:current-alpine3.18 as builder
+FROM node:22.15.0-bookworm-slim AS builder
 
-RUN apk add --update --no-cache \
-   python3 \
-   make \
-   g++
+RUN apt-get update && apt-get install -y --no-install-recommends python3 make g++ \
+    && rm -rf /var/lib/apt/lists/*
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --omit=dev --no-audit --no-fund
 
-COPY  package*.json /
-RUN   set ex && npm install --production
-
-FROM  node:20.5.0-slim
-
-WORKDIR /$WORKDIR
-
-RUN apt-get update && \
-	apt-get install -y tini && \
-	npm install pm2 -g
-
-COPY  --from=builder /node_modules $WORKDIR/node_modules
-COPY  src ${WORKDIR}/src
-COPY  index.js ${WORKDIR}
-COPY  config.json ${WORKDIR}
-COPY  ecosystem.config.js ${WORKDIR}
-
-EXPOSE ${PORT}
-
-ENV RUNNING_IN_DOCKER true
-
+FROM node:22.15.0-bookworm-slim
+RUN apt-get update && apt-get install -y --no-install-recommends tini \
+    && rm -rf /var/lib/apt/lists/*
+WORKDIR /app
+COPY --from=builder /app/node_modules ./node_modules
+COPY src ./src
+COPY index.js ecosystem.config.js config.parallax.json ./
+RUN mkdir -p /app/products /var/lib/aggr-journal && chown -R node:node /app /var/lib/aggr-journal
+USER node
+ENV RUNNING_IN_DOCKER=true PM2_HOME=/tmp/pm2
+EXPOSE 3000
 ENTRYPOINT ["/usr/bin/tini", "--"]
-CMD [ "pm2-runtime", "ecosystem.config.js"]
+CMD ["./node_modules/.bin/pm2-runtime", "ecosystem.config.js"]

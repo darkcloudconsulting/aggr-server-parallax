@@ -1,9 +1,9 @@
 {
-  "name": "aggr-server",
+  "name": "aggr-server-parallax",
   "version": "1.2.1",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "node --test test/*.test.js",
     "start": "pm2-runtime ecosystem.config.js",
     "dev": "pm2-dev ecosystem.config.dev.yaml",
     "generateVapidKeys": "node scripts/web-push/generateVapidKeys",
@@ -15,16 +15,17 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Tucsky/aggr-server.git"
+    "url": "git+https://github.com/darkcloudconsulting/aggr-server-parallax.git"
   },
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/Tucsky/aggr-server/issues"
+    "url": "https://github.com/darkcloudconsulting/aggr-server-parallax/issues"
   },
-  "homepage": "https://github.com/Tucsky/aggr-server#readme",
+  "homepage": "https://github.com/darkcloudconsulting/aggr-server-parallax#readme",
   "dependencies": {
     "axios": "^1.4.0",
+    "better-sqlite3": "12.11.1",
     "body-parser": "^1.19.1",
     "cors": "^2.8.5",
     "decamelize": "^4.0.0",

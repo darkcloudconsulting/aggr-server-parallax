@@ -1,6 +1,5 @@
 const Exchange = require('../exchange')
 const axios = require('axios')
-const { getHms } = require('../helper')
 
 class Okex extends Exchange {
   constructor() {
@@ -29,6 +28,7 @@ class Okex extends Exchange {
     const aliases = {}
     const types = {}
     const inversed = {}
+    const contractMetadata = {}
 
     for (let data of response) {
       for (let product of data.data) {
@@ -38,7 +38,7 @@ class Okex extends Exchange {
         if (type === 'FUTURES') {
           // futures
 
-          specs[pair] = +product.ctVal
+          specs[pair] = +product.ctVal * +(product.ctMult || 1)
           aliases[pair] = product.alias
 
           if (product.ctType === 'inverse') {
@@ -47,10 +47,19 @@ class Okex extends Exchange {
         } else if (type === 'SWAP') {
           // swap
 
-          specs[pair] = +product.ctVal
+          specs[pair] = +product.ctVal * +(product.ctMult || 1)
 
           if (product.ctType === 'inverse') {
             inversed[pair] = true
+          }
+        }
+
+        if (type === 'FUTURES' || type === 'SWAP') {
+          contractMetadata[pair] = {
+            value: product.ctVal,
+            multiplier: product.ctMult || '1',
+            currency: product.ctValCcy,
+            type: product.ctType
           }
         }
 
@@ -64,7 +73,8 @@ class Okex extends Exchange {
       specs,
       aliases,
       types,
-      inversed
+      inversed,
+      contractMetadata
     }
   }
 
@@ -91,6 +101,8 @@ class Okex extends Exchange {
     )
 
     if (this.types[pair] !== 'SPOT') {
+      api._liquidationTypes ||= new Set()
+      if (api._liquidationTypes.has(this.types[pair])) return
       api.send(
         JSON.stringify({
           op: 'subscribe',
@@ -102,6 +114,7 @@ class Okex extends Exchange {
           ]
         })
       )
+      api._liquidationTypes.add(this.types[pair])
     }
   }
 
@@ -127,10 +140,11 @@ class Okex extends Exchange {
       })
     )
 
-    if (this.types[pair] !== 'SPOT') {
+    if (this.types[pair] !== 'SPOT' && api._liquidationTypes &&
+        !api._connected.some(connected => this.types[connected] === this.types[pair])) {
       api.send(
         JSON.stringify({
-          op: 'subscribe',
+          op: 'unsubscribe',
           args: [
             {
               channel: 'liquidation-orders',
@@ -139,6 +153,7 @@ class Okex extends Exchange {
           ]
         })
       )
+      api._liquidationTypes.delete(this.types[pair])
     }
   }
 
@@ -173,18 +188,29 @@ class Okex extends Exchange {
 
   formatTrade(trade) {
     let size
+    const type = this.types[trade.instId]
+    const metadata = this.contractMetadata && this.contractMetadata[trade.instId]
 
-    if (typeof this.specs[trade.instId] !== 'undefined') {
+    if (type === 'SPOT') {
+      size = +trade.sz
+    } else if (metadata && Number.isFinite(this.specs[trade.instId]) &&
+      (this.inversed[trade.instId]
+        ? metadata.currency === 'USD'
+        : metadata.currency === trade.instId.split('-')[0])) {
       size =
         (trade.sz * this.specs[trade.instId]) /
         (this.inversed[trade.instId] ? trade.px : 1)
     } else {
-      size = trade.sz
+      throw new Error(`Unknown OKX contract units for ${trade.instId}`)
     }
 
     return {
       exchange: this.id,
       pair: trade.instId,
+      id: trade.tradeId,
+      count: trade.count ? +trade.count : 1,
+      nativeQuantity: trade.sz,
+      nativeUnit: type === 'SPOT' ? 'base' : 'contracts',
       timestamp: +trade.ts,
       price: +trade.px,
       size: +size,
@@ -281,56 +307,37 @@ class Okex extends Exchange {
       }
     }
 
-    const endpoint = `https://www.okx.com/api/v5/market/history-trades?instId=${range.pair}&type=2&limit=100&after=${range.to}`
-
     try {
-      const response = await this.retryWithDelay(
-        () => axios.get(endpoint),
-        5, // Retry up to 5 times
-        1, // Start with a multiplier of 1
-        range
-      )
-
-      if (response.data.data.length) {
-        const trades = response.data.data
-          .filter(
-            trade =>
-              Number(trade.ts) > range.from &&
-              Number(trade.ts) < range.to
-          )
+      let after = String(range.to)
+      let type = 2
+      for (;;) {
+        const endpoint = `https://www.okx.com/api/v5/market/history-trades?instId=${encodeURIComponent(range.pair)}&type=${type}&limit=100&after=${after}`
+        const response = await this.retryWithDelay(() => axios.get(endpoint), 5, 1, range)
+        if (response.data.code !== '0' || !Array.isArray(response.data.data)) {
+          throw new Error(`OKX history rejected: ${response.data.msg || response.data.code}`)
+        }
+        const page = response.data.data
+        if (!page.length) break
+        const trades = page.filter(trade => Number(trade.ts) > range.from && Number(trade.ts) < range.to)
           .map(trade => this.formatTrade(trade))
-
-        if (trades.length) {
-          this.emitTrades(null, trades)
-          totalRecovered += trades.length
-          range.to = trades[trades.length - 1].timestamp
-        }
-
-        const remainingMissingTime = range.to - range.from
-
-        if (trades.length) {
-          console.log(
-            `[${this.id}.recoverMissingTrades] +${trades.length} ${range.pair
-            } ... but there's more (${getHms(remainingMissingTime)} remaining)`
-          )
-          return this.waitBeforeContinueRecovery().then(() =>
-            this.getMissingTrades(range, totalRecovered, false)
-          )
-        } else {
-          console.log(
-            `[${this.id}.recoverMissingTrades] +${trades.length} ${range.pair
-            } (${getHms(remainingMissingTime)} remaining)`
-          )
-        }
+        if (trades.length) this.emitTrades(null, trades)
+        totalRecovered += trades.length
+        const oldest = page[page.length - 1]
+        if (page.length < 100 || Number(oldest.ts) <= range.from) break
+        if (String(oldest.tradeId) === after) throw new Error('OKX trade ID did not advance')
+        after = String(oldest.tradeId)
+        type = 1
+        await this.waitBeforeContinueRecovery()
       }
-
+      range.to = range.from
+      console.log(`[${this.id}.recoverMissingTrades] +${totalRecovered} ${range.pair}`)
       return totalRecovered
     } catch (err) {
       console.error(
         `[${this.id}] failed to get missing trades on ${range.pair} after retries:`,
         err.message
       )
-      return totalRecovered
+      throw err
     }
   }
 

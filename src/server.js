@@ -11,6 +11,7 @@ const path = require('path')
 const rateLimit = require('express-rate-limit')
 const bodyParser = require('body-parser')
 const config = require('./config')
+const Journal = require('./storage/journal')
 const alertService = require('./services/alert')
 const socketService = require('./services/socket')
 const {
@@ -40,6 +41,9 @@ class Server extends EventEmitter {
      * @type Trade[]
      */
     this.chunk = []
+    this.journal = config.parallaxJournalLocation
+      ? new Journal(config.parallaxJournalLocation, config.influxTimeframe)
+      : null
 
     this.BANNED_IPS = []
 
@@ -50,6 +54,21 @@ class Server extends EventEmitter {
       this.handleExchangesEvents()
 
       restoreConnections().then(() => {
+        if (this.journal) {
+          for (const state of this.journal.health().markets) {
+            if (!config.pairs.includes(state.market)) continue
+            const [exchange, ...pair] = state.market.split(':')
+            const prior = connections[state.market]
+            if (!prior) {
+              connections[state.market] = {
+                exchange, pair: pair.join(':'), hit: 1, restarts: 0,
+                startedAt: state.lastTrade - 60000, timestamp: state.lastTrade
+              }
+            } else {
+              prior.timestamp = Math.max(prior.timestamp || 0, state.lastTrade)
+            }
+          }
+        }
         this.connectExchanges()
       })
 
@@ -132,6 +151,21 @@ class Server extends EventEmitter {
   }
 
   backupTrades(exitBackup) {
+    if (this.journal) {
+      if (exitBackup) clearTimeout(this.backupTimeout)
+      if (!this.storages) return Promise.resolve()
+      const storage = this.storages.find(item => item.format === 'point')
+      if (!storage) throw new Error('Parallax journal requires point storage')
+      return storage.flushJournal(this.journal, !!exitBackup)
+        .then(() => this.journal.resolveIssue('SYSTEM', 0, 'write_failed'))
+        .catch(error => {
+          console.error('[storage/journal] flush failed; events remain pending', error)
+          this.journal.recordIssue('SYSTEM', 0, 'write_failed')
+        })
+        .finally(() => {
+          if (!exitBackup) this.scheduleNextBackup()
+        })
+    }
     if (exitBackup) {
       clearTimeout(this.backupTimeout)
     } else if (!this.storages || !this.chunk.length) {
@@ -200,6 +234,17 @@ class Server extends EventEmitter {
     this.exchanges.forEach(exchange => {
       exchange.on('trades', this.dispatchRawTrades.bind(this))
       exchange.on('liquidations', this.dispatchRawTrades.bind(this))
+      if (this.journal) {
+        exchange.on('recovery-start', range => this.journal.recordIssue(
+          `${exchange.id}:${range.pair}`, Math.floor(range.from / config.influxTimeframe) * config.influxTimeframe,
+          'recovery_pending'))
+        exchange.on('recovery-complete', range => this.journal.resolveIssue(
+          `${exchange.id}:${range.pair}`, Math.floor(range.from / config.influxTimeframe) * config.influxTimeframe,
+          'recovery_pending'))
+        exchange.on('recovery-failed', range => this.journal.recordIssue(
+          `${exchange.id}:${range.pair}`, Math.floor(range.from / config.influxTimeframe) * config.influxTimeframe,
+          `recovery_failed:${range.reason}`))
+      }
       exchange.on('disconnected', (pair, apiId, apiLength) => {
         const id = exchange.id + ':' + pair
 
@@ -317,6 +362,21 @@ class Server extends EventEmitter {
       res.json({
         message: 'hi'
       })
+    })
+
+    app.get('/health/feeds', (req, res) => {
+      const feeds = config.pairs.map(market => {
+        const connection = connections[market] || {}
+        return {
+          market,
+          connected: !!connection.apiId,
+          subscriptionState: !connection.apiId ? 'disconnected' : connection.timestamp ? 'trade_observed' : 'requested',
+          lastTrade: connection.timestamp || null,
+          lastPing: connection.ping || null,
+          intervals: this.journal ? this.journal.quality(market, 20) : []
+        }
+      })
+      res.json({ feeds, journal: this.journal ? this.journal.health() : null })
     })
 
     if (alertService.enabled) {
@@ -764,7 +824,15 @@ class Server extends EventEmitter {
    * @param {Trade[]} trades
    */
 
-  dispatchRawTrades(trades) {
+  dispatchRawTrades(trades, source) {
+    if (this.journal) {
+      try {
+        trades = this.journal.append(trades, source ? 'live' : 'recovery')
+      } catch (error) {
+        console.error('[storage/journal] unable to retain incoming trades', error)
+        process.exit(1)
+      }
+    }
     for (let i = 0; i < trades.length; i++) {
       const trade = trades[i]
 
@@ -776,6 +844,7 @@ class Server extends EventEmitter {
         const identifier = trade.exchange + ':' + trade.pair
 
         // ping connection
+        if (!connections[identifier]) continue
         connections[identifier].hit++
 
         if (trade.timestamp > connections[identifier].timestamp) {
@@ -784,7 +853,7 @@ class Server extends EventEmitter {
       }
 
       // save trade
-      if (this.storages) {
+      if (this.storages && !this.journal) {
         this.chunk.push(trade)
       }
     }

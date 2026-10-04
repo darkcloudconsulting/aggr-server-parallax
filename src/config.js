@@ -143,6 +143,10 @@ const defaultConfig = {
   // prefix aggr retention policies with this (unused rp using that prefix get automaticaly removed)
   influxRetentionPrefix: 'aggr_',
 
+  // A durable event journal is enabled by the Parallax deployment config.
+  parallaxJournalLocation: null,
+  influxRetentionByTimeframe: null,
+
   // create new text file every N ms when storage is set to "file" (default 1h)
   filesInterval: 3600000,
 

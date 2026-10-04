@@ -34,7 +34,8 @@ class Binance extends Exchange {
 
     this.subscriptions[pair] = ++this.lastSubscriptionId
 
-    const params = [pair + '@trade']
+    // Use the same aggregate identity as the public recovery endpoint.
+    const params = [pair + '@aggTrade']
 
     api.send(
       JSON.stringify({
@@ -58,7 +59,7 @@ class Binance extends Exchange {
       return
     }
 
-    const params = [pair + '@trade']
+    const params = [pair + '@aggTrade']
 
     api.send(
       JSON.stringify({
@@ -77,7 +78,7 @@ class Binance extends Exchange {
   onMessage(event, api) {
     const json = JSON.parse(event.data)
 
-    if (json.E) {
+    if (json.e === 'aggTrade') {
       return this.emitTrades(api.id, [
         this.formatTrade(json, json.s.toLowerCase())
       ])
@@ -88,6 +89,10 @@ class Binance extends Exchange {
     return {
       exchange: this.id,
       pair: symbol,
+      id: trade.t !== undefined ? trade.t : trade.a,
+      count: trade.l !== undefined && trade.f !== undefined ? trade.l - trade.f + 1 : 1,
+      nativeQuantity: trade.q,
+      nativeUnit: 'base',
       timestamp: trade.T,
       price: +trade.p,
       size: +trade.q,
@@ -95,57 +100,37 @@ class Binance extends Exchange {
     }
   }
 
-  getMissingTrades(range, totalRecovered = 0) {
-    const startTime = range.from
-    const below1HEndTime = Math.min(range.to, startTime + 1000 * 60 * 60)
-
-    const endpoint = `https://data-api.binance.vision/api/v3/aggTrades?symbol=${range.pair.toUpperCase()}&startTime=${
-      startTime + 1
-    }&endTime=${below1HEndTime}&limit=1000`
-
-    return axios
-      .get(endpoint)
-      .then(response => {
-        if (response.data.length) {
-          const trades = response.data.map(trade => ({
-            ...this.formatTrade(trade, range.pair),
-            count: trade.l - trade.f + 1,
-            timestamp: trade.T
-          }))
-
-          this.emitTrades(null, trades)
-
-          totalRecovered += trades.length
-          range.from = trades[trades.length - 1].timestamp
-
-          const remainingMissingTime = range.to - range.from
-
-          if (remainingMissingTime > 1000) {
-            console.log(
-              `[${this.id}.recoverMissingTrades] +${trades.length} ${
-                range.pair
-              } ... (${getHms(remainingMissingTime)} remaining)`
-            )
-            return this.waitBeforeContinueRecovery().then(() =>
-              this.getMissingTrades(range, totalRecovered)
-            )
-          } else {
-            console.log(
-              `[${this.id}.recoverMissingTrades] +${trades.length} ${
-                range.pair
-              } (${getHms(remainingMissingTime)} remaining)`
-            )
-          }
+  async getMissingTrades(range) {
+    let recovered = 0
+    for (let start = range.from; start < range.to; start += 3599000) {
+      const end = Math.min(range.to, start + 3599000)
+      let fromId = null
+      for (;;) {
+        const params = { symbol: range.pair.toUpperCase(), limit: 1000 }
+        if (fromId === null) {
+          params.startTime = start
+          params.endTime = end
+        } else {
+          params.fromId = fromId
         }
-
-        return totalRecovered
-      })
-      .catch(err => {
-        console.error(
-          `Failed to get historical trades on ${range.pair}`,
-          err.message
-        )
-      })
+        const response = await axios.get('https://data-api.binance.vision/api/v3/aggTrades', { params })
+        const page = response.data
+        if (!page.length) break
+        const trades = page.filter(trade => trade.T > range.from && trade.T < range.to)
+          .map(trade => this.formatTrade(trade, range.pair))
+        if (trades.length) this.emitTrades(null, trades)
+        recovered += trades.length
+        const last = page[page.length - 1]
+        if (page.length < 1000 || last.T > end) break
+        const next = Number(last.a) + 1
+        if (!Number.isSafeInteger(next) || next === fromId) throw new Error('Binance aggregate ID did not advance')
+        fromId = next
+        await this.waitBeforeContinueRecovery()
+      }
+      range.from = end
+    }
+    console.log(`[${this.id}.recoverMissingTrades] +${recovered} ${range.pair} (${getHms(range.to - range.from)} remaining)`)
+    return recovered
   }
 }
 

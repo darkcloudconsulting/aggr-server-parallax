@@ -518,6 +518,7 @@ class Exchange extends EventEmitter {
     )
 
     this.recoveryRanges.push(range)
+    this.emit('recovery-start', { ...range })
 
     if (!recovering[this.id]) {
       this.recoverNextRange()
@@ -533,7 +534,7 @@ class Exchange extends EventEmitter {
       return
     }
 
-    if (connection.lastConnectionMissEstimate < 10) {
+    if (!config.parallaxJournalLocation && connection.lastConnectionMissEstimate < 10) {
       // too much chance to be zero recovery so we skip to avoid being 429'd because of those
       return
     }
@@ -587,6 +588,7 @@ class Exchange extends EventEmitter {
 
     try {
       const recoveredCount = await this.getMissingTrades(range)
+      this.emit('recovery-complete', { ...originalRange, pair: range.pair, recoveredCount })
 
       if (recoveredCount) {
         console.info(
@@ -632,6 +634,7 @@ class Exchange extends EventEmitter {
         }
       }
     } catch (error) {
+      this.emit('recovery-failed', { ...originalRange, pair: range.pair, reason: error.message })
       console.error(
         `[${this.id}.recoverTrades] something went wrong while recovering ${range.pair}'s missing trades`,
         error.message

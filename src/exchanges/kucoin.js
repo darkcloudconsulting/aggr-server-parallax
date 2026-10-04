@@ -162,6 +162,9 @@ class Kucoin extends Exchange {
     return {
       exchange: this.id,
       pair: trade.symbol,
+      id: trade.tradeId !== undefined ? trade.tradeId : trade.sequence,
+      nativeQuantity: trade.size,
+      nativeUnit: this.multipliers[trade.symbol] ? 'contracts' : 'base',
       price: +trade.price,
       side: trade.side === 'buy' ? 'buy' : 'sell',
       timestamp,
@@ -177,6 +180,27 @@ class Kucoin extends Exchange {
     }
 
     return this.emitTrades(api.id, [this.formatTrade(json.data)])
+  }
+
+  async getMissingTrades(range) {
+    const futures = !!this.multipliers[range.pair]
+    const url = futures
+      ? 'https://api-futures.kucoin.com/api/v1/trade/history'
+      : 'https://api.kucoin.com/api/v1/market/histories'
+    const response = await axios.get(url, { params: { symbol: range.pair } })
+    if (response.data.code !== '200000' || !Array.isArray(response.data.data)) {
+      throw new Error(`KuCoin history rejected: ${response.data.msg || response.data.code}`)
+    }
+    const page = response.data.data
+    const timestamp = trade => Number(futures ? trade.ts : trade.time) / 1000000
+    const trades = page.filter(trade => timestamp(trade) > range.from && timestamp(trade) < range.to)
+      .map(trade => this.formatTrade({ ...trade, symbol: range.pair }))
+    if (trades.length) this.emitTrades(null, trades)
+    if (page.length && Math.min(...page.map(timestamp)) > range.from) {
+      throw new Error('KuCoin recent trades do not cover the full recovery interval')
+    }
+    range.from = range.to
+    return trades.length
   }
 
   onApiCreated(api) {

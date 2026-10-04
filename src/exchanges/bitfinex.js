@@ -168,6 +168,9 @@ class Bitfinex extends Exchange {
     return {
       exchange: this.id,
       pair: pair,
+      id: trade[0],
+      nativeQuantity: trade[2],
+      nativeUnit: 'base',
       timestamp: parseInt(trade[1]),
       price: trade[3],
       size: Math.abs(trade[2]),

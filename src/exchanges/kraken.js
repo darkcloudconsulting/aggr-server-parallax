@@ -20,7 +20,7 @@ class Kraken extends Exchange {
       if (typeof this.specs[pair] !== 'undefined') {
         return 'wss://futures.kraken.com/ws/v1'
       } else {
-        return 'wss://ws.kraken.com'
+        return 'wss://ws.kraken.com/v2'
       }
     }
   }
@@ -95,10 +95,10 @@ class Kraken extends Exchange {
       event.feed = 'trade'
     } else {
       // spot
-      event.pair = [pair]
-      event.subscription = {
-        name: 'trade'
-      }
+      api.send(JSON.stringify({ method: 'subscribe', params: {
+        channel: 'trade', symbol: [pair.replace(/^XBT\//, 'BTC/')], snapshot: false
+      } }))
+      return
     }
 
     api.send(JSON.stringify(event))
@@ -124,10 +124,10 @@ class Kraken extends Exchange {
       event.feed = 'trade'
     } else {
       // spot
-      event.pair = [pair]
-      event.subscription = {
-        name: 'trade'
-      }
+      api.send(JSON.stringify({ method: 'unsubscribe', params: {
+        channel: 'trade', symbol: [pair.replace(/^XBT\//, 'BTC/')]
+      } }))
+      return
     }
 
     api.send(JSON.stringify(event))
@@ -138,6 +138,9 @@ class Kraken extends Exchange {
       const output = {
         exchange: this.id,
         pair: pair,
+        id: trade.uid || trade.trade_id,
+        nativeQuantity: trade.qty !== undefined ? trade.qty : trade.size,
+        nativeUnit: 'quote_contracts',
         timestamp: isNaN(trade.time) ? +new Date(trade.time) : trade.time,
         price: trade.price,
         size:
@@ -155,6 +158,9 @@ class Kraken extends Exchange {
       return {
         exchange: this.id,
         pair: pair,
+        id: trade[6],
+        nativeQuantity: trade[1],
+        nativeUnit: 'base',
         timestamp: trade[2] * 1000,
         price: +trade[0],
         size: +trade[1],
@@ -166,8 +172,22 @@ class Kraken extends Exchange {
   onMessage(event, api) {
     const json = JSON.parse(event.data)
 
-    if (!json || json.event === 'heartbeat') {
+    if (!json || json.event === 'heartbeat' || json.channel === 'heartbeat') {
       return
+    }
+
+    if (json.channel === 'trade' && json.type === 'update' && Array.isArray(json.data)) {
+      return this.emitTrades(api.id, json.data.map(trade => ({
+        exchange: this.id,
+        pair: trade.symbol.replace(/^BTC\//, 'XBT/'),
+        id: trade.trade_id,
+        nativeQuantity: trade.qty,
+        nativeUnit: 'base',
+        timestamp: Date.parse(trade.timestamp),
+        price: +trade.price,
+        size: +trade.qty,
+        side: trade.side
+      })))
     }
 
     if (json.feed === 'trade' && json.qty) {

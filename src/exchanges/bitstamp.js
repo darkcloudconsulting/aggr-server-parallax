@@ -1,4 +1,5 @@
 const Exchange = require('../exchange')
+const axios = require('axios')
 
 class Bitstamp extends Exchange {
   constructor() {
@@ -73,12 +74,33 @@ class Bitstamp extends Exchange {
       {
         exchange: this.id,
         pair: json.channel.split('_').pop(),
+        id: trade.id,
+        nativeQuantity: trade.amount,
+        nativeUnit: 'base',
         timestamp: +new Date(trade.microtimestamp / 1000),
         price: trade.price,
         size: trade.amount,
         side: trade.type === 0 ? 'buy' : 'sell'
       }
     ])
+  }
+
+  async getMissingTrades(range) {
+    const response = await axios.get(`https://www.bitstamp.net/api/v2/transactions/${range.pair}/`, {
+      params: { time: 'day', limit: 1000 }
+    })
+    if (!Array.isArray(response.data)) throw new Error('Bitstamp transactions response invalid')
+    const page = response.data
+    const trades = page.filter(trade => +trade.date * 1000 > range.from && +trade.date * 1000 < range.to)
+      .map(trade => ({ exchange: this.id, pair: range.pair, id: trade.tid,
+        nativeQuantity: trade.amount, nativeUnit: 'base', timestamp: +trade.date * 1000,
+        price: +trade.price, size: +trade.amount, side: String(trade.type) === '0' ? 'buy' : 'sell' }))
+    if (trades.length) this.emitTrades(null, trades)
+    if (page.length && Math.min(...page.map(trade => +trade.date * 1000)) > range.from + 1000) {
+      throw new Error('Bitstamp recent transactions do not cover the full recovery interval')
+    }
+    range.from = range.to
+    return trades.length
   }
 }
 

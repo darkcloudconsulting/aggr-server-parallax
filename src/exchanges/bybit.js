@@ -18,8 +18,10 @@ class Bybit extends Exchange {
     this.endpoints = {
       PRODUCTS: [
         'https://api.bybit.com/v5/market/instruments-info?category=spot', // BTCUSDT -> BTCUSDT-SPOT
-        'https://api.bybit.com/v5/market/instruments-info?category=linear', // BTCUSDT, BTCPERP, BTC-03NOV23
-        'https://api.bybit.com/v5/market/instruments-info?category=inverse' // BTCUSD, BTCUSDH24
+        ...['BTC', 'ETH', 'SOL'].map(base =>
+          `https://api.bybit.com/v5/market/instruments-info?category=linear&baseCoin=${base}&limit=1000`),
+        ...['BTC', 'ETH', 'SOL'].map(base =>
+          `https://api.bybit.com/v5/market/instruments-info?category=inverse&baseCoin=${base}&limit=1000`)
       ]
     }
 
@@ -40,13 +42,17 @@ class Bybit extends Exchange {
     const products = []
     const types = {}
 
-    for (let data of response) {
-      const type = ['spot', 'linear', 'inverse'][response.indexOf(data)]
+    for (let i = 0; i < response.length; i++) {
+      const data = response[i]
+      const type = i === 0 ? 'spot' : i <= 3 ? 'linear' : 'inverse'
 
       for (const product of data.result.list) {
+        if (product.status !== 'Trading') continue
+        if (type === 'inverse' && !product.contractType.startsWith('Inverse')) continue
+        if (type === 'linear' && !product.contractType.startsWith('Linear')) continue
         const symbol = `${product.symbol}${type === 'spot' ? '-SPOT' : ''}`
 
-        products.push(symbol)
+        if (!types[symbol]) products.push(symbol)
         types[symbol] = type
       }
     }
@@ -125,6 +131,9 @@ class Bybit extends Exchange {
     return {
       exchange: this.id,
       pair,
+      id: trade.i,
+      nativeQuantity: trade.v,
+      nativeUnit: !isSpot && this.types[trade.s] === 'inverse' ? 'quote_contracts' : 'base',
       timestamp: +trade.T,
       price: +trade.p,
       size,
@@ -186,6 +195,7 @@ class Bybit extends Exchange {
           const trades = response.data.result.list
             .filter(trade => trade.time > range.from && trade.time <= range.to)
             .map(trade => this.formatTrade({
+              i: trade.execId,
               T: trade.time,
               s: trade.symbol,
               p: trade.price,

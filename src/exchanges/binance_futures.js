@@ -24,7 +24,7 @@ class BinanceFutures extends Exchange {
         return 'wss://dstream.binance.com/ws'
       }
 
-      return 'wss://fstream.binance.com/public/ws'
+      return 'wss://fstream.binance.com/market/ws'
     }
   }
 
@@ -82,8 +82,8 @@ class BinanceFutures extends Exchange {
     this.subscriptions[pair] = ++this.lastSubscriptionId
 
     const params = this.dapi[pair]
-      ? [pair + '@trade', pair + '@forceOrder']
-      : [pair + '@trade']
+      ? [pair + '@aggTrade', pair + '@forceOrder']
+      : [pair + '@aggTrade']
 
     api.send(
       JSON.stringify({
@@ -118,8 +118,8 @@ class BinanceFutures extends Exchange {
     }
 
     const params = this.dapi[pair]
-      ? [pair + '@trade', pair + '@forceOrder']
-      : [pair + '@trade']
+      ? [pair + '@aggTrade', pair + '@forceOrder']
+      : [pair + '@aggTrade']
 
     api.send(
       JSON.stringify({
@@ -152,7 +152,7 @@ class BinanceFutures extends Exchange {
     }
 
     if (
-      json.e === 'trade' &&
+      json.e === 'aggTrade' &&
       (!json.X || json.X === 'MARKET' || json.X === 'RPI')
     ) {
       return this.emitTrades(api.id, [
@@ -185,6 +185,10 @@ class BinanceFutures extends Exchange {
     return {
       exchange: this.id,
       pair: symbol,
+      id: trade.t !== undefined ? trade.t : trade.a,
+      count: trade.l !== undefined && trade.f !== undefined ? trade.l - trade.f + 1 : 1,
+      nativeQuantity: trade.q,
+      nativeUnit: this.dapi && this.dapi[symbol] ? 'contracts' : 'base',
       timestamp: trade.T,
       price: +trade.p,
       size: this.getSize(trade.q, trade.p, symbol),
@@ -206,63 +210,39 @@ class BinanceFutures extends Exchange {
     }
   }
 
-  getMissingTrades(range, totalRecovered = 0) {
-    const startTime = range.from
-    let endpoint = `?symbol=${range.pair.toUpperCase()}&startTime=${startTime + 1}&endTime=${range.to}&limit=1000`
-
-    if (this.dapi[range.pair]) {
-      endpoint = 'https://dapi.binance.com/dapi/v1/aggTrades' + endpoint
-    } else {
-      endpoint = 'https://fapi.binance.com/fapi/v1/aggTrades' + endpoint
-    }
-
-    return axios
-      .get(endpoint)
-      .then(response => {
-        if (response.data.length) {
-          const trades = response.data
-            .filter(trade => trade.T > range.from && trade.T < range.to)
-            .map(trade => ({
-              ...this.formatTrade(trade, range.pair),
-              count: trade.l - trade.f + 1
-            }))
-
-          if (trades.length) {
-            this.emitTrades(null, trades)
-
-            totalRecovered += trades.length
-            range.from = trades[trades.length - 1].timestamp
-          }
-
-          const remainingMissingTime = range.to - range.from
-
-          if (trades.length) {
-            console.log(
-              `[${this.id}.recoverMissingTrades] +${trades.length} ${range.pair
-              } ... but theres more (${getHms(remainingMissingTime)} remaining)`
-            )
-
-            return this.waitBeforeContinueRecovery().then(() =>
-              this.getMissingTrades(range, totalRecovered)
-            )
-          } else {
-            console.log(
-              `[${this.id}.recoverMissingTrades] +${trades.length} ${range.pair
-              } (${getHms(remainingMissingTime)} remaining)`
-            )
-          }
+  async getMissingTrades(range) {
+    const url = this.dapi[range.pair]
+      ? 'https://dapi.binance.com/dapi/v1/aggTrades'
+      : 'https://fapi.binance.com/fapi/v1/aggTrades'
+    let recovered = 0
+    for (let start = range.from; start < range.to; start += 3599000) {
+      const end = Math.min(range.to, start + 3599000)
+      let fromId = null
+      for (;;) {
+        const params = { symbol: range.pair.toUpperCase(), limit: 1000 }
+        if (fromId === null) {
+          params.startTime = start
+          params.endTime = end
+        } else {
+          params.fromId = fromId
         }
-
-        return totalRecovered
-      })
-      .catch(err => {
-        console.error(
-          `[${this.id}] failed to get missing trades on ${range.pair}`,
-          err.message
-        )
-
-        return totalRecovered
-      })
+        const page = (await axios.get(url, { params })).data
+        if (!page.length) break
+        const trades = page.filter(trade => trade.T > range.from && trade.T < range.to)
+          .map(trade => this.formatTrade(trade, range.pair))
+        if (trades.length) this.emitTrades(null, trades)
+        recovered += trades.length
+        const last = page[page.length - 1]
+        if (page.length < 1000 || last.T > end) break
+        const next = Number(last.a) + 1
+        if (!Number.isSafeInteger(next) || next === fromId) throw new Error('Binance futures aggregate ID did not advance')
+        fromId = next
+        await this.waitBeforeContinueRecovery()
+      }
+      range.from = end
+    }
+    console.log(`[${this.id}.recoverMissingTrades] +${recovered} ${range.pair} (${getHms(range.to - range.from)} remaining)`)
+    return recovered
   }
 
   openLiquidationApi(api) {

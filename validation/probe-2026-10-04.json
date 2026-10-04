@@ -1,0 +1,965 @@
+{
+  "startedAt": "2026-10-04T09:06:09.154Z",
+  "durationMs": 25000,
+  "venues": {
+    "BINANCE": {
+      "requested": [
+        "BINANCE:btcusdt",
+        "BINANCE:ethusdt",
+        "BINANCE:solusdt"
+      ],
+      "missingProducts": [],
+      "errors": [],
+      "control": [
+        {
+          "id": 1
+        },
+        {
+          "id": 2
+        },
+        {
+          "id": 3
+        }
+      ],
+      "trades": {
+        "BINANCE:btcusdt": {
+          "messages": 239,
+          "executions": 1004,
+          "first": 1791104777234,
+          "last": 1791104809733,
+          "weakIds": 0
+        },
+        "BINANCE:solusdt": {
+          "messages": 24,
+          "executions": 74,
+          "first": 1791104778228,
+          "last": 1791104809424,
+          "weakIds": 0
+        },
+        "BINANCE:ethusdt": {
+          "messages": 68,
+          "executions": 258,
+          "first": 1791104778636,
+          "last": 1791104809439,
+          "weakIds": 0
+        }
+      }
+    },
+    "BINANCE_FUTURES": {
+      "requested": [
+        "BINANCE_FUTURES:btcusdt",
+        "BINANCE_FUTURES:ethusdt",
+        "BINANCE_FUTURES:solusdt",
+        "BINANCE_FUTURES:btcusd_perp",
+        "BINANCE_FUTURES:ethusd_perp",
+        "BINANCE_FUTURES:solusd_perp"
+      ],
+      "missingProducts": [],
+      "errors": [],
+      "control": [
+        {
+          "id": 1
+        },
+        {
+          "id": 2
+        },
+        {
+          "id": 3
+        },
+        {
+          "id": 4
+        },
+        {
+          "id": 5
+        },
+        {
+          "id": 6
+        },
+        {
+          "id": 7
+        },
+        {
+          "id": 8
+        },
+        {
+          "id": 9
+        }
+      ],
+      "trades": {
+        "BINANCE_FUTURES:btcusdt": {
+          "messages": 295,
+          "executions": 831,
+          "first": 1791104780729,
+          "last": 1791104808147,
+          "weakIds": 0
+        },
+        "BINANCE_FUTURES:ethusdt": {
+          "messages": 106,
+          "executions": 271,
+          "first": 1791104781017,
+          "last": 1791104809525,
+          "weakIds": 0
+        },
+        "BINANCE_FUTURES:solusdt": {
+          "messages": 77,
+          "executions": 390,
+          "first": 1791104782008,
+          "last": 1791104809650,
+          "weakIds": 0
+        },
+        "BINANCE_FUTURES:btcusd_perp": {
+          "messages": 17,
+          "executions": 21,
+          "first": 1791104785379,
+          "last": 1791104802374,
+          "weakIds": 0
+        },
+        "BINANCE_FUTURES:ethusd_perp": {
+          "messages": 2,
+          "executions": 7,
+          "first": 1791104785519,
+          "last": 1791104793488,
+          "weakIds": 0
+        },
+        "BINANCE_FUTURES:solusd_perp": {
+          "messages": 1,
+          "executions": 1,
+          "first": 1791104790473,
+          "last": 1791104790473,
+          "weakIds": 0
+        }
+      }
+    },
+    "COINBASE": {
+      "requested": [
+        "COINBASE:BTC-USD",
+        "COINBASE:ETH-USD",
+        "COINBASE:SOL-USD"
+      ],
+      "missingProducts": [],
+      "errors": [],
+      "control": [],
+      "trades": {
+        "COINBASE:BTC-USD": {
+          "messages": 123,
+          "executions": 123,
+          "first": 1791104779436,
+          "last": 1791104809935,
+          "weakIds": 0
+        },
+        "COINBASE:SOL-USD": {
+          "messages": 36,
+          "executions": 36,
+          "first": 1791104779705,
+          "last": 1791104809427,
+          "weakIds": 0
+        },
+        "COINBASE:ETH-USD": {
+          "messages": 10,
+          "executions": 10,
+          "first": 1791104790600,
+          "last": 1791104807990,
+          "weakIds": 0
+        }
+      }
+    },
+    "KRAKEN": {
+      "requested": [
+        "KRAKEN:XBT/USD",
+        "KRAKEN:ETH/USD",
+        "KRAKEN:SOL/USD",
+        "KRAKEN:PF_XBTUSD",
+        "KRAKEN:PF_ETHUSD",
+        "KRAKEN:PF_SOLUSD"
+      ],
+      "missingProducts": [],
+      "errors": [],
+      "control": [
+        {
+          "event": "info"
+        },
+        {
+          "event": "subscribed"
+        },
+        {
+          "event": "subscribed"
+        },
+        {
+          "event": "subscribed"
+        },
+        {
+          "success": true
+        },
+        {
+          "success": true
+        },
+        {
+          "success": true
+        }
+      ],
+      "trades": {
+        "KRAKEN:PF_XBTUSD": {
+          "messages": 127,
+          "executions": 127,
+          "first": 1791104781548,
+          "last": 1791104808186,
+          "weakIds": 0
+        },
+        "KRAKEN:SOL/USD": {
+          "messages": 12,
+          "executions": 12,
+          "first": 1791104782524,
+          "last": 1791104808182,
+          "weakIds": 0
+        },
+        "KRAKEN:XBT/USD": {
+          "messages": 21,
+          "executions": 21,
+          "first": 1791104784150,
+          "last": 1791104798048,
+          "weakIds": 0
+        },
+        "KRAKEN:PF_SOLUSD": {
+          "messages": 19,
+          "executions": 19,
+          "first": 1791104787498,
+          "last": 1791104809699,
+          "weakIds": 0
+        },
+        "KRAKEN:PF_ETHUSD": {
+          "messages": 9,
+          "executions": 9,
+          "first": 1791104787797,
+          "last": 1791104801549,
+          "weakIds": 0
+        },
+        "KRAKEN:ETH/USD": {
+          "messages": 3,
+          "executions": 3,
+          "first": 1791104801150,
+          "last": 1791104801627,
+          "weakIds": 0
+        }
+      }
+    },
+    "OKEX": {
+      "requested": [
+        "OKEX:BTC-USDT",
+        "OKEX:ETH-USDT",
+        "OKEX:SOL-USDT",
+        "OKEX:BTC-USDT-SWAP",
+        "OKEX:ETH-USDT-SWAP",
+        "OKEX:SOL-USDT-SWAP",
+        "OKEX:BTC-USD-SWAP",
+        "OKEX:ETH-USD-SWAP",
+        "OKEX:SOL-USD-SWAP"
+      ],
+      "missingProducts": [],
+      "errors": [],
+      "control": [
+        {
+          "event": "subscribe",
+          "arg": {
+            "channel": "trades",
+            "instId": "BTC-USDT"
+          }
+        },
+        {
+          "event": "subscribe",
+          "arg": {
+            "channel": "trades",
+            "instId": "ETH-USDT"
+          }
+        },
+        {
+          "event": "subscribe",
+          "arg": {
+            "channel": "trades",
+            "instId": "SOL-USDT"
+          }
+        },
+        {
+          "event": "subscribe",
+          "arg": {
+            "channel": "trades",
+            "instId": "BTC-USDT-SWAP"
+          }
+        },
+        {
+          "event": "subscribe",
+          "arg": {
+            "channel": "liquidation-orders",
+            "instType": "SWAP"
+          }
+        },
+        {
+          "event": "subscribe",
+          "arg": {
+            "channel": "trades",
+            "instId": "ETH-USDT-SWAP"
+          }
+        },
+        {
+          "event": "subscribe",
+          "arg": {
+            "channel": "liquidation-orders",
+            "instType": "SWAP"
+          }
+        },
+        {
+          "event": "subscribe",
+          "arg": {
+            "channel": "trades",
+            "instId": "SOL-USDT-SWAP"
+          }
+        },
+        {
+          "event": "subscribe",
+          "arg": {
+            "channel": "liquidation-orders",
+            "instType": "SWAP"
+          }
+        },
+        {
+          "event": "subscribe",
+          "arg": {
+            "channel": "trades",
+            "instId": "BTC-USD-SWAP"
+          }
+        },
+        {
+          "event": "subscribe",
+          "arg": {
+            "channel": "liquidation-orders",
+            "instType": "SWAP"
+          }
+        },
+        {
+          "event": "subscribe",
+          "arg": {
+            "channel": "trades",
+            "instId": "ETH-USD-SWAP"
+          }
+        },
+        {
+          "event": "subscribe",
+          "arg": {
+            "channel": "liquidation-orders",
+            "instType": "SWAP"
+          }
+        },
+        {
+          "event": "subscribe",
+          "arg": {
+            "channel": "trades",
+            "instId": "SOL-USD-SWAP"
+          }
+        },
+        {
+          "event": "subscribe",
+          "arg": {
+            "channel": "liquidation-orders",
+            "instType": "SWAP"
+          }
+        }
+      ],
+      "trades": {
+        "OKEX:SOL-USDT-SWAP": {
+          "messages": 44,
+          "executions": 63,
+          "first": 1791104780415,
+          "last": 1791104809824,
+          "weakIds": 0
+        },
+        "OKEX:ETH-USDT-SWAP": {
+          "messages": 139,
+          "executions": 300,
+          "first": 1791104780467,
+          "last": 1791104810023,
+          "weakIds": 0
+        },
+        "OKEX:BTC-USDT-SWAP": {
+          "messages": 209,
+          "executions": 475,
+          "first": 1791104780473,
+          "last": 1791104810006,
+          "weakIds": 0
+        },
+        "OKEX:BTC-USDT": {
+          "messages": 33,
+          "executions": 38,
+          "first": 1791104782096,
+          "last": 1791104809568,
+          "weakIds": 0
+        },
+        "OKEX:ETH-USDT": {
+          "messages": 14,
+          "executions": 15,
+          "first": 1791104782097,
+          "last": 1791104808255,
+          "weakIds": 0
+        },
+        "OKEX:SOL-USDT": {
+          "messages": 18,
+          "executions": 82,
+          "first": 1791104785824,
+          "last": 1791104809627,
+          "weakIds": 0
+        },
+        "OKEX:BTC-USD-SWAP": {
+          "messages": 7,
+          "executions": 15,
+          "first": 1791104790378,
+          "last": 1791104795513,
+          "weakIds": 0
+        }
+      }
+    },
+    "BYBIT": {
+      "requested": [
+        "BYBIT:BTCUSDT-SPOT",
+        "BYBIT:ETHUSDT-SPOT",
+        "BYBIT:SOLUSDT-SPOT",
+        "BYBIT:BTCUSDT",
+        "BYBIT:ETHUSDT",
+        "BYBIT:SOLUSDT",
+        "BYBIT:BTCUSD",
+        "BYBIT:ETHUSD",
+        "BYBIT:SOLUSD"
+      ],
+      "missingProducts": [],
+      "errors": [],
+      "control": [
+        {
+          "op": "subscribe",
+          "success": true
+        },
+        {
+          "op": "subscribe",
+          "success": true
+        },
+        {
+          "op": "subscribe",
+          "success": true
+        },
+        {
+          "op": "subscribe",
+          "success": true
+        },
+        {
+          "op": "subscribe",
+          "success": true
+        },
+        {
+          "op": "subscribe",
+          "success": true
+        },
+        {
+          "op": "subscribe",
+          "success": true
+        },
+        {
+          "op": "subscribe",
+          "success": true
+        },
+        {
+          "op": "subscribe",
+          "success": true
+        },
+        {
+          "op": "ping",
+          "success": true
+        },
+        {
+          "op": "ping",
+          "success": true
+        },
+        {
+          "op": "ping",
+          "success": true
+        }
+      ],
+      "trades": {
+        "BYBIT:SOLUSDT": {
+          "messages": 113,
+          "executions": 113,
+          "first": 1791104783038,
+          "last": 1791104809565,
+          "weakIds": 0
+        },
+        "BYBIT:ETHUSDT": {
+          "messages": 136,
+          "executions": 136,
+          "first": 1791104783317,
+          "last": 1791104808218,
+          "weakIds": 0
+        },
+        "BYBIT:BTCUSDT": {
+          "messages": 305,
+          "executions": 305,
+          "first": 1791104785158,
+          "last": 1791104809138,
+          "weakIds": 0
+        },
+        "BYBIT:ETHUSDT-SPOT": {
+          "messages": 31,
+          "executions": 31,
+          "first": 1791104787721,
+          "last": 1791104807304,
+          "weakIds": 0
+        },
+        "BYBIT:SOLUSDT-SPOT": {
+          "messages": 29,
+          "executions": 29,
+          "first": 1791104788230,
+          "last": 1791104806183,
+          "weakIds": 0
+        },
+        "BYBIT:BTCUSDT-SPOT": {
+          "messages": 165,
+          "executions": 165,
+          "first": 1791104790417,
+          "last": 1791104804865,
+          "weakIds": 0
+        },
+        "BYBIT:BTCUSD": {
+          "messages": 4,
+          "executions": 4,
+          "first": 1791104790497,
+          "last": 1791104790500,
+          "weakIds": 0
+        },
+        "BYBIT:ETHUSD": {
+          "messages": 18,
+          "executions": 18,
+          "first": 1791104790512,
+          "last": 1791104799406,
+          "weakIds": 0
+        }
+      }
+    },
+    "BITGET": {
+      "requested": [
+        "BITGET:BTCUSDT-SPOT",
+        "BITGET:ETHUSDT-SPOT",
+        "BITGET:SOLUSDT-SPOT",
+        "BITGET:BTCUSDT",
+        "BITGET:ETHUSDT",
+        "BITGET:SOLUSDT",
+        "BITGET:BTCUSD",
+        "BITGET:ETHUSD",
+        "BITGET:SOLUSD"
+      ],
+      "missingProducts": [],
+      "errors": [],
+      "control": [
+        {
+          "event": "subscribe",
+          "arg": {
+            "instType": "spot",
+            "topic": "publicTrade",
+            "symbol": "BTCUSDT"
+          }
+        },
+        {
+          "event": "subscribe",
+          "arg": {
+            "instType": "spot",
+            "topic": "publicTrade",
+            "symbol": "ETHUSDT"
+          }
+        },
+        {
+          "event": "subscribe",
+          "arg": {
+            "instType": "spot",
+            "topic": "publicTrade",
+            "symbol": "SOLUSDT"
+          }
+        },
+        {
+          "event": "subscribe",
+          "arg": {
+            "instType": "usdt-futures",
+            "topic": "publicTrade",
+            "symbol": "BTCUSDT"
+          }
+        },
+        {
+          "event": "subscribe",
+          "arg": {
+            "instType": "usdt-futures",
+            "topic": "liquidation"
+          }
+        },
+        {
+          "event": "subscribe",
+          "arg": {
+            "instType": "coin-futures",
+            "topic": "liquidation"
+          }
+        },
+        {
+          "event": "subscribe",
+          "arg": {
+            "instType": "usdc-futures",
+            "topic": "liquidation"
+          }
+        },
+        {
+          "event": "subscribe",
+          "arg": {
+            "instType": "usdt-futures",
+            "topic": "publicTrade",
+            "symbol": "ETHUSDT"
+          }
+        },
+        {
+          "event": "subscribe",
+          "arg": {
+            "instType": "usdt-futures",
+            "topic": "publicTrade",
+            "symbol": "SOLUSDT"
+          }
+        },
+        {
+          "event": "subscribe",
+          "arg": {
+            "instType": "coin-futures",
+            "topic": "publicTrade",
+            "symbol": "BTCUSD_CM"
+          }
+        },
+        {
+          "event": "subscribe",
+          "arg": {
+            "instType": "coin-futures",
+            "topic": "publicTrade",
+            "symbol": "ETHUSD_CM"
+          }
+        },
+        {
+          "event": "subscribe",
+          "arg": {
+            "instType": "coin-futures",
+            "topic": "publicTrade",
+            "symbol": "SOLUSD_CM"
+          }
+        }
+      ],
+      "trades": {
+        "BITGET:BTCUSDT": {
+          "messages": 340,
+          "executions": 340,
+          "first": 1791104784481,
+          "last": 1791104809767,
+          "weakIds": 0
+        },
+        "BITGET:ETHUSDT-SPOT": {
+          "messages": 11,
+          "executions": 11,
+          "first": 1791104784562,
+          "last": 1791104809918,
+          "weakIds": 0
+        },
+        "BITGET:SOLUSDT-SPOT": {
+          "messages": 12,
+          "executions": 12,
+          "first": 1791104784698,
+          "last": 1791104803924,
+          "weakIds": 0
+        },
+        "BITGET:ETHUSDT": {
+          "messages": 42,
+          "executions": 42,
+          "first": 1791104785584,
+          "last": 1791104806850,
+          "weakIds": 0
+        },
+        "BITGET:SOLUSDT": {
+          "messages": 25,
+          "executions": 25,
+          "first": 1791104787980,
+          "last": 1791104805401,
+          "weakIds": 0
+        },
+        "BITGET:BTCUSDT-SPOT": {
+          "messages": 13,
+          "executions": 13,
+          "first": 1791104789002,
+          "last": 1791104803344,
+          "weakIds": 0
+        },
+        "BITGET:BTCUSD": {
+          "messages": 1,
+          "executions": 1,
+          "first": 1791104795604,
+          "last": 1791104795604,
+          "weakIds": 0
+        },
+        "BITGET:ETHUSD": {
+          "messages": 1,
+          "executions": 1,
+          "first": 1791104807380,
+          "last": 1791104807380,
+          "weakIds": 0
+        }
+      }
+    },
+    "CRYPTOCOM": {
+      "requested": [
+        "CRYPTOCOM:BTC_USD",
+        "CRYPTOCOM:ETH_USD",
+        "CRYPTOCOM:SOL_USD",
+        "CRYPTOCOM:BTCUSD-PERP",
+        "CRYPTOCOM:ETHUSD-PERP",
+        "CRYPTOCOM:SOLUSD-PERP"
+      ],
+      "missingProducts": [],
+      "errors": [],
+      "control": [],
+      "trades": {
+        "CRYPTOCOM:BTC_USD": {
+          "messages": 86,
+          "executions": 86,
+          "first": 1791104779414,
+          "last": 1791104797354,
+          "weakIds": 0
+        },
+        "CRYPTOCOM:ETH_USD": {
+          "messages": 60,
+          "executions": 60,
+          "first": 1791104760347,
+          "last": 1791104807167,
+          "weakIds": 0
+        },
+        "CRYPTOCOM:SOLUSD-PERP": {
+          "messages": 59,
+          "executions": 59,
+          "first": 1791104769082,
+          "last": 1791104804385,
+          "weakIds": 0
+        },
+        "CRYPTOCOM:ETHUSD-PERP": {
+          "messages": 59,
+          "executions": 59,
+          "first": 1791104769080,
+          "last": 1791104795513,
+          "weakIds": 0
+        },
+        "CRYPTOCOM:SOL_USD": {
+          "messages": 59,
+          "executions": 59,
+          "first": 1791104777664,
+          "last": 1791104805399,
+          "weakIds": 0
+        },
+        "CRYPTOCOM:BTCUSD-PERP": {
+          "messages": 100,
+          "executions": 100,
+          "first": 1791104782683,
+          "last": 1791104795253,
+          "weakIds": 0
+        }
+      }
+    },
+    "BITFINEX": {
+      "requested": [
+        "BITFINEX:BTCUSD",
+        "BITFINEX:ETHUSD",
+        "BITFINEX:SOLUSD"
+      ],
+      "missingProducts": [],
+      "errors": [],
+      "control": [
+        {
+          "event": "info"
+        },
+        {
+          "event": "subscribed"
+        },
+        {
+          "event": "subscribed"
+        },
+        {
+          "event": "subscribed"
+        },
+        {
+          "event": "subscribed"
+        }
+      ],
+      "trades": {
+        "BITFINEX:BTCUSD": {
+          "messages": 20,
+          "executions": 20,
+          "first": 1791104790286,
+          "last": 1791104804587,
+          "weakIds": 0
+        },
+        "BITFINEX:SOLUSD": {
+          "messages": 4,
+          "executions": 4,
+          "first": 1791104790466,
+          "last": 1791104808645,
+          "weakIds": 0
+        },
+        "BITFINEX:ETHUSD": {
+          "messages": 3,
+          "executions": 3,
+          "first": 1791104790546,
+          "last": 1791104790820,
+          "weakIds": 0
+        }
+      }
+    },
+    "BITSTAMP": {
+      "requested": [
+        "BITSTAMP:btcusd",
+        "BITSTAMP:ethusd",
+        "BITSTAMP:solusd"
+      ],
+      "missingProducts": [],
+      "errors": [],
+      "control": [
+        {
+          "event": "bts:subscription_succeeded"
+        },
+        {
+          "event": "bts:subscription_succeeded"
+        },
+        {
+          "event": "bts:subscription_succeeded"
+        },
+        {
+          "event": "trade"
+        },
+        {
+          "event": "trade"
+        },
+        {
+          "event": "trade"
+        },
+        {
+          "event": "trade"
+        },
+        {
+          "event": "trade"
+        },
+        {
+          "event": "trade"
+        },
+        {
+          "event": "trade"
+        },
+        {
+          "event": "trade"
+        },
+        {
+          "event": "trade"
+        },
+        {
+          "event": "trade"
+        },
+        {
+          "event": "trade"
+        },
+        {
+          "event": "trade"
+        },
+        {
+          "event": "trade"
+        },
+        {
+          "event": "trade"
+        },
+        {
+          "event": "trade"
+        },
+        {
+          "event": "trade"
+        }
+      ],
+      "trades": {
+        "BITSTAMP:btcusd": {
+          "messages": 12,
+          "executions": 12,
+          "first": 1791104790284,
+          "last": 1791104808224,
+          "weakIds": 0
+        },
+        "BITSTAMP:ethusd": {
+          "messages": 1,
+          "executions": 1,
+          "first": 1791104794564,
+          "last": 1791104794564,
+          "weakIds": 0
+        },
+        "BITSTAMP:solusd": {
+          "messages": 3,
+          "executions": 3,
+          "first": 1791104808655,
+          "last": 1791104808655,
+          "weakIds": 0
+        }
+      }
+    },
+    "KUCOIN": {
+      "requested": [
+        "KUCOIN:BTC-USDT",
+        "KUCOIN:ETH-USDT",
+        "KUCOIN:SOL-USDT",
+        "KUCOIN:XBTUSDTM",
+        "KUCOIN:ETHUSDTM",
+        "KUCOIN:SOLUSDTM"
+      ],
+      "missingProducts": [],
+      "errors": [],
+      "control": [],
+      "trades": {
+        "KUCOIN:SOLUSDTM": {
+          "messages": 33,
+          "executions": 33,
+          "first": 1791104786500,
+          "last": 1791104809701,
+          "weakIds": 0
+        },
+        "KUCOIN:ETHUSDTM": {
+          "messages": 1,
+          "executions": 1,
+          "first": 1791104786633,
+          "last": 1791104786633,
+          "weakIds": 0
+        },
+        "KUCOIN:BTC-USDT": {
+          "messages": 21,
+          "executions": 21,
+          "first": 1791104790084,
+          "last": 1791104803319,
+          "weakIds": 0
+        },
+        "KUCOIN:XBTUSDTM": {
+          "messages": 16,
+          "executions": 16,
+          "first": 1791104790468,
+          "last": 1791104799716,
+          "weakIds": 0
+        },
+        "KUCOIN:SOL-USDT": {
+          "messages": 2,
+          "executions": 2,
+          "first": 1791104790485,
+          "last": 1791104808809.9998,
+          "weakIds": 0
+        },
+        "KUCOIN:ETH-USDT": {
+          "messages": 5,
+          "executions": 5,
+          "first": 1791104799915,
+          "last": 1791104809729,
+          "weakIds": 0
+        }
+      }
+    }
+  },
+  "finishedAt": "2026-10-04T09:06:50.159Z"
+}

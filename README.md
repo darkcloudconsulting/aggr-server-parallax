@@ -1,5 +1,8 @@
 # Aggr server
 
+For the Parallax deployment, market matrix, and current validation status, see
+[README-PARALLAX.md](README-PARALLAX.md).
+
 Autonomous multi market trades monitoring, storing and resampling solution
 
 ![aggr-server](https://i.imgur.com/slF3jDy.png)

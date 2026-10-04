@@ -73,7 +73,7 @@ class InfluxStorage {
       if (config.collect) {
         await this.ensureRetentionPolicies()
 
-        if (config.pairs.length) {
+        if (config.pairs.length && !config.parallaxJournalLocation) {
           await this.getPreviousBars()
         }
       }
@@ -221,7 +221,11 @@ class InfluxStorage {
 
     for (let timeframe of timeframes) {
       const rpDuration = timeframe * config.influxRetentionPerTimeframe
-      const rpDurationLitteral = getHms(rpDuration).replace(/[\s,]/g, '')
+      const timeframeName = getHms(timeframe)
+      const rpDurationLitteral = config.influxRetentionByTimeframe &&
+        config.influxRetentionByTimeframe[timeframeName]
+        ? config.influxRetentionByTimeframe[timeframeName]
+        : getHms(rpDuration).replace(/[\s,]/g, '')
       const rpName = config.influxRetentionPrefix + getHms(timeframe)
 
       if (!retentionsPolicies[rpName]) {
@@ -304,7 +308,7 @@ class InfluxStorage {
       }
 
       if (typeof barToMutate[prop] === 'number') {
-        barToMutate[props] += value
+        barToMutate[prop] += value
       }
     }
 
@@ -360,6 +364,45 @@ class InfluxStorage {
       if (timeBackupFloored === timeMinuteFloored) {
         return this.import()
       }
+    }
+  }
+
+  // The journal owns replay and bar construction for the Parallax deployment.
+  // A failed base write or rollup leaves every affected bucket dirty for retry.
+  async flushJournal(journal, isExiting = false) {
+    const entries = journal.pending(120, isExiting ? Date.now() + 1 : Date.now() - 30000)
+    if (!entries.length) return
+    const bars = entries.map(({ market, bucket }) => journal.bar(market, bucket)).filter(Boolean)
+    const points = bars.map(bar => {
+      const fields = {}
+      if (bar.cbuy || bar.csell) {
+        Object.assign(fields, { cbuy: bar.cbuy, csell: bar.csell,
+          vbuy: bar.vbuy, vsell: bar.vsell,
+          open: bar.open, high: bar.high, low: bar.low, close: bar.close })
+      }
+      if (bar.lbuy || bar.lsell) {
+        fields.lbuy = bar.lbuy
+        fields.lsell = bar.lsell
+      }
+      return {
+        measurement: 'trades_' + getHms(config.influxTimeframe),
+        tags: { market: bar.market }, fields, timestamp: bar.time
+      }
+    })
+    await this.writePoints(points, { precision: 'ms', retentionPolicy: this.baseRp })
+    const minutes = new Map()
+    for (const entry of entries) {
+      const minute = Math.floor(entry.bucket / 60000) * 60000
+      if (!minutes.has(minute)) minutes.set(minute, new Set())
+      minutes.get(minute).add(entry.market)
+    }
+    for (const [minute, markets] of minutes) {
+      await this.resample({ from: minute, to: minute + 60000, markets: [...markets] })
+    }
+    journal.markWritten(entries)
+    if (!this.lastJournalPrune || Date.now() - this.lastJournalPrune > 3600000) {
+      journal.prune()
+      this.lastJournalPrune = Date.now()
     }
   }
 
@@ -736,12 +779,10 @@ class InfluxStorage {
       max(high) AS high, 
       first(open) AS open, 
       last(close) AS close, 
-      sum(count) AS count, 
       sum(cbuy) AS cbuy, 
       sum(csell) AS csell, 
       sum(lbuy) AS lbuy, 
       sum(lsell) AS lsell, 
-      sum(vol) AS vol, 
       sum(vbuy) AS vbuy, 
       sum(vsell) AS vsell`
 

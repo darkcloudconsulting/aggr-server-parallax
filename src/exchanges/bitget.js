@@ -1,5 +1,6 @@
 const Exchange = require('../exchange')
 const { sleep } = require('../helper')
+const axios = require('axios')
 
 const SPOT_PAIR_REGEX = /-SPOT$/
 
@@ -174,6 +175,9 @@ class Bitget extends Exchange {
     return {
       exchange: this.id,
       pair,
+      id: trade.i !== undefined ? trade.i : trade.tradeId !== undefined ? trade.tradeId : trade.id,
+      nativeQuantity: trade.v !== undefined ? trade.v : trade.sz,
+      nativeUnit: instType === 'coin-futures' ? 'quote_contracts' : 'base',
       timestamp: +timestamp,
       price: numericPrice,
       size: +size,
@@ -242,6 +246,27 @@ class Bitget extends Exchange {
         return this.emitLiquidations(api.id, liquidations)
       }
     }
+  }
+
+  async getMissingTrades(range) {
+    const type = this.types[range.pair]
+    const symbol = this.formatLocalToRemotePair(range.pair, type)
+    const response = await axios.get('https://api.bitget.com/api/v3/market/fills', {
+      params: { category: type.toUpperCase(), symbol, limit: 1000 }
+    })
+    if (response.data.code !== '00000' || !Array.isArray(response.data.data)) {
+      throw new Error(`Bitget fills rejected: ${response.data.msg || response.data.code}`)
+    }
+    const page = response.data.data
+    const trades = page.filter(trade => +trade.ts > range.from && +trade.ts < range.to)
+      .map(trade => this.formatTrade({ i: trade.execId, p: trade.price,
+        v: trade.size, S: trade.side, T: trade.ts }, range.pair, type))
+    if (trades.length) this.emitTrades(null, trades)
+    if (page.length && Math.min(...page.map(trade => +trade.ts)) > range.from) {
+      throw new Error('Bitget recent fills do not cover the full recovery interval')
+    }
+    range.from = range.to
+    return trades.length
   }
 
   onApiCreated(api) {

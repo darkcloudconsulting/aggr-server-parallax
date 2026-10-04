@@ -151,6 +151,9 @@ class Coinbase extends Exchange {
     return {
       exchange: this.id,
       pair: pair,
+      id: trade.trade_id !== undefined ? trade.trade_id : trade.tradeId,
+      nativeQuantity: trade.size,
+      nativeUnit: 'base',
       timestamp: +new Date(trade.time),
       price: +trade.price,
       size: +trade.size,

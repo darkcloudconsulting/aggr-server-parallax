@@ -101,6 +101,9 @@ class CryptoCom extends Exchange {
     return {
       exchange: this.id,
       pair: t.i,
+      id: t.d,
+      nativeQuantity: t.q,
+      nativeUnit: 'base',
       timestamp: +new Date(t.t),
       price: +t.p,
       size: +t.q,

@@ -112,6 +112,9 @@ class Deribit extends Exchange {
     return {
       exchange: this.id,
       pair: trade.instrument_name,
+      id: trade.trade_id,
+      nativeQuantity: trade.amount,
+      nativeUnit: this.types[trade.instrument_name] === 'reversed' ? 'quote_contracts' : 'base',
       timestamp: +trade.timestamp,
       price: +trade.price,
       size: size,
