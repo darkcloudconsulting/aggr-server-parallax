@@ -10,6 +10,7 @@ on:
       - ecosystem.config.js
       - index.js
       - src/**
+      - scripts/repair-okx-launch.js
       - .github/workflows/image.yml
   workflow_dispatch:
 permissions:
