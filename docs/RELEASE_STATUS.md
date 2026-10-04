@@ -203,13 +203,16 @@ The new 24-hour Job `aggr-parallax-soak-20261004-r5` started at
 **2026-10-04 11:25:55 UTC**, sampling every five minutes into
 `/srv/aggr-parallax/journal/soak-2026-10-04-r5.jsonl`. Its first sample
 reported 66 connected markets and a successful Influx read; it preceded the
-Bitstamp bucket verification and recorded four then-unresolved issues. Its
-subsequent samples must return to zero. Completion is due after
+Bitstamp bucket verification and recorded four then-unresolved issues. The
+11:30:55 UTC sample recorded 66 connected and 66 settled markets, zero
+unresolved issues, and a successful Influx read. Completion is due after
 **2026-10-05 11:25:55 UTC**. The 24-hour release gate remains pending.
 Node-200 remained cordoned; journal and Influx ZFS datasets used 59 MiB and
 67 MiB of their respective 150 and 350 GiB quotas. Pre- and post-rollout
 comparisons found the original snow and SOL deployment specs identical and
 both Ready at 1/1. The InfluxDB deployment spec was also unchanged.
+The [repository image build](https://github.com/darkcloudconsulting/aggr-server-parallax/actions/runs/37198935660)
+for this merged source revision completed successfully.
 
 ## Remaining release gate
 
