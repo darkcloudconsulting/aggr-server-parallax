@@ -8,7 +8,7 @@ remain unchanged.
 
 ## Market matrix
 
-The configuration contains 63 BTC, ETH, and SOL markets. Product identities
+The configuration contains 66 BTC, ETH, and SOL markets. Product identities
 are kept separate by venue and spot, linear, or inverse contract. A 25-second
 public websocket probe is archived in
 [`validation/probe-2026-10-04.json`](../validation/probe-2026-10-04.json).
@@ -36,6 +36,7 @@ An empty 25-second window is **not** evidence of an outage.
 | Bitstamp spot | `btcusd`, `ethusd`, `solusd` | 3/3 |  |
 | KuCoin spot | `BTC-USDT`, `ETH-USDT`, `SOL-USDT` | 3/3 |  |
 | KuCoin linear | `XBTUSDTM`, `ETHUSDTM`, `SOLUSDTM` | 3/3 | Futures multiplier applied. |
+| Hyperliquid linear perpetual | `BTC`, `ETH`, `SOL` | 3/3 | Three subscription acknowledgements, 114 websocket fills in 12 seconds, and all ten recent REST fills per market matched websocket identities at 11:20 UTC. USDT denominated with USDC collateral. New 24-hour validation pending. |
 
 ### Explicit exclusions
 
@@ -44,6 +45,7 @@ An empty 25-second window is **not** evidence of an outage.
 | `DERIBIT:BTC-PERPETUAL`, `ETH-PERPETUAL`, `SOL_USDC-PERPETUAL` | Raw trade subscription returns `raw_subscriptions_not_available_for_unauthorized`; no credentials supplied. Adapter retained in source, markets disabled. |
 | `COINBASE:BTC-PERP-INTX`, `ETH-PERP-INTX`, `SOL-PERP-INTX` | Catalogued but only stale snapshots appeared in the public probe; no new trades. Reassess with an independent recent-trade window before enabling. |
 | `KRAKEN:PI_XBTUSD` | Catalogued inverse contract had no trades in the public probe and is lower priority than active PF contracts. |
+| Hyperliquid `UBTC/USDC`, `UETH/USDC`, `USOL/USDC` spot | HyperCore `spotMetaAndAssetCtxs` reported zero 24-hour notional volume for each on 4 October 2026. These tokens were not substituted for BTC, ETH, or SOL perpetuals. |
 | BitMEX | Closed product paths in the reviewed deployment. |
 | HTX, Poloniex | Lower priority venues outside the reputable-venue selection. |
 
@@ -90,6 +92,12 @@ point and rollups were written with no known gap; exchange reconciliation is a
 separate validation gate. A historical trade recovered after a restart does not
 prove that the new websocket subscription has delivered a live trade.
 
+Hyperliquid's public `recentTrades` response is capped at ten and ignored
+`startTime`/`endTime` in the 4 October 2026 probe. Its adapter resolves a
+reconnect gap only when the oldest returned fill is strictly earlier than the
+last journaled trade; otherwise it records an unresolved gap. The new markets
+must pass a fresh 24-hour observation window before certification.
+
 ## Live deployment checkpoint
 
 At 2026-10-04 09:26 UTC, InfluxDB and the application were Ready on
@@ -103,12 +111,13 @@ pod specifications, image IDs, and Ready status for `aggr-server-snow` and
 
 The original soak and two short restart checks were superseded by subsequent
 connector and health fixes; their files remain on the journal dataset. The
-current 24-hour Job `aggr-parallax-soak-20261004-r4` began at
+previous 24-hour Job `aggr-parallax-soak-20261004-r4` began at
 **2026-10-04 10:03:58 UTC** and samples every five minutes into
 `/srv/aggr-parallax/journal/soak-2026-10-04-r4.jsonl`. Its first sample had
 63 connected markets, 63 with a settled interval, zero unresolved issues, and
-a successful Influx query. Completion is expected after
-**2026-10-05 10:03:58 UTC**. Just after the final restart, 62 subscriptions
+a successful Influx query. The Hyperliquid rollout at 11:25 UTC superseded it
+for release validation; its samples remain as evidence. Just after the
+preceding restart, 62 subscriptions
 had delivered a live trade; thin `BITGET:SOLUSD` had an earlier trade but was
 still awaiting one on the new socket. This is not classified as an outage.
 By 10:07 UTC, all 63 current subscriptions had delivered a live trade.
@@ -156,7 +165,7 @@ Influx reads and settled bars. This checkpoint does not replace the full
 Snowgraf now has the additive **Aggr Parallax (InfluxQL)** data source, UID
 `aggr-parallax-influxql`. Its Grafana proxy returned the 12 project retention
 policies plus `autogen`, and a live `BINANCE:btcusdt` one-minute bar. The
-[data catalog](DATA_CATALOG.md) lists all 63 symbols, bar fields, and retention
+[data catalog](DATA_CATALOG.md) lists the current 66 symbols, bar fields, and retention
 periods. The versioned datasource definition and idempotent registration are
 in [`deploy/`](../deploy/grafana-datasource.json).
 
@@ -165,6 +174,42 @@ and journal datasets used about 47 MiB, 23 MiB, and 24 MiB respectively within
 their 500/350/150 GiB quotas. Node-200 remained cordoned. The original snow
 and SOL deployment specs, pod UIDs, image IDs, and Ready status were unchanged
 after the final rollout.
+
+## Hyperliquid rollout — 2026-10-04
+
+The adapter now waits for a `subscriptionResponse` before marking a market
+connected, keeps the websocket alive, and retains the native `(time, coin,
+tid)` identity and base quantity. Three perpetual markets were added:
+`HYPERLIQUID:BTC`, `HYPERLIQUID:ETH`, and `HYPERLIQUID:SOL`. Hyperliquid's
+contract specification makes these USDT-denominated linear perps with USDC
+collateral. The spot candidates remain excluded for zero reported 24-hour
+volume. The bounded websocket and REST probe is in
+[`validation/hyperliquid-2026-10-04.json`](../validation/hyperliquid-2026-10-04.json).
+Recovery beyond the latest ten native fills remains a known limit; incomplete
+reconnect intervals are flagged unresolved rather than certified.
+
+The image imported on node-200 has immutable local OCI digest
+`sha256:2cff2df2a50ae6c2a5a1fa822c9ebf38a347943784b16cf99edce6f3189ac3a0`.
+At 11:28 UTC, the application and InfluxDB pods were Ready with zero restarts;
+all 66 markets were connected and had delivered a trade on their current
+subscriptions. Each Hyperliquid market had a settled interval with no weak
+trade identity, and all three had queryable one-minute Influx bars. The journal
+had zero unresolved gaps. Four Bitstamp second-resolution recovery buckets
+created by this rollout were independently matched to their native REST
+executions and cleared; the evidence is in
+[`validation/bitstamp-coarse-hyperliquid-rollout-2026-10-04.json`](../validation/bitstamp-coarse-hyperliquid-rollout-2026-10-04.json).
+
+The new 24-hour Job `aggr-parallax-soak-20261004-r5` started at
+**2026-10-04 11:25:55 UTC**, sampling every five minutes into
+`/srv/aggr-parallax/journal/soak-2026-10-04-r5.jsonl`. Its first sample
+reported 66 connected markets and a successful Influx read; it preceded the
+Bitstamp bucket verification and recorded four then-unresolved issues. Its
+subsequent samples must return to zero. Completion is due after
+**2026-10-05 11:25:55 UTC**. The 24-hour release gate remains pending.
+Node-200 remained cordoned; journal and Influx ZFS datasets used 59 MiB and
+67 MiB of their respective 150 and 350 GiB quotas. Pre- and post-rollout
+comparisons found the original snow and SOL deployment specs identical and
+both Ready at 1/1. The InfluxDB deployment spec was also unchanged.
 
 ## Remaining release gate
 

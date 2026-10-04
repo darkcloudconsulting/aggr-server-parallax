@@ -87,10 +87,9 @@ class Hyperliquid extends Exchange {
    * @param {string} pair
    */
   async subscribe(api, pair) {
-    if (!(await super.subscribe.apply(this, arguments))) {
-      return
-    }
-
+    // The base class marks a market connected immediately. Hyperliquid sends an
+    // explicit subscriptionResponse, so wait for that before publishing health.
+    if (api._pending.indexOf(pair) === -1) return false
     api.send(
       JSON.stringify({
         method: 'subscribe',
@@ -130,23 +129,71 @@ class Hyperliquid extends Exchange {
   onMessage(event, api) {
     const json = JSON.parse(event.data)
 
-    if (json && json.channel === 'trades') {
+    if (json.channel === 'subscriptionResponse') {
+      const { method, subscription } = json.data || {}
+      if (method === 'subscribe' && subscription?.type === 'trades') {
+        super.subscribe(api, subscription.coin)
+      }
+      return
+    }
+
+    if (json.channel === 'trades' && Array.isArray(json.data)) {
       return this.emitTrades(
         api.id,
-        json.data.map(trade => this.formatTrade(trade))
+        json.data
+          .filter(trade => api._connected.indexOf(trade.coin) !== -1)
+          .map(trade => this.formatTrade(trade))
       )
     }
   }
 
   formatTrade(trade) {
+    if (!Number.isSafeInteger(trade.time) || !Number.isSafeInteger(trade.tid) ||
+      !['B', 'A'].includes(trade.side) || !(+trade.px > 0) || !(+trade.sz > 0)) {
+      throw new Error('Hyperliquid trade lacks a safe native time or tid')
+    }
     return {
       exchange: this.id,
       pair: trade.coin,
-      timestamp: +new Date(trade.time),
+      // Hyperliquid defines (block time, coin, tid) as globally unique.
+      id: `${trade.time}:${trade.coin}:${trade.tid}`,
+      timestamp: trade.time,
       price: +trade.px,
       size: +trade.sz,
+      nativeQuantity: trade.sz,
+      nativeUnit: 'base',
+      count: 1,
       side: trade.side === 'B' ? 'buy' : 'sell'
     }
+  }
+
+  async getMissingTrades(range) {
+    const response = await axios.post(this.endpoints.PRODUCTS, {
+      type: 'recentTrades', coin: range.pair
+    })
+    const page = response.data
+    if (!Array.isArray(page) || !page.length || !page.every(trade => Number.isSafeInteger(trade.time))) {
+      throw new Error('Hyperliquid recent trades unavailable')
+    }
+    // recentTrades has no cursor and returns only ten fills. A strict earlier
+    // boundary is required: equality can conceal other fills in that block.
+    if (Math.min(...page.map(trade => trade.time)) >= range.from) {
+      throw new Error('Hyperliquid recent trades do not cover the full recovery interval')
+    }
+    const trades = page
+      .filter(trade => trade.time >= range.from && trade.time <= range.to)
+      .map(trade => this.formatTrade(trade))
+    if (trades.length) this.emitTrades(null, trades)
+    range.from = range.to
+    return trades.length
+  }
+
+  onApiCreated(api) {
+    this.startKeepAlive(api, { method: 'ping' }, 30000)
+  }
+
+  onApiRemoved(api) {
+    this.stopKeepAlive(api)
   }
 }
 

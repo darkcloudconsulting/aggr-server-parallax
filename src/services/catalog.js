@@ -239,7 +239,7 @@ module.exports.parseMarket = function (exchangeId, symbol, noStable = true) {
   } else if (exchangeId === 'KUCOIN') {
     localSymbol = localSymbol.replace(/M$/, '')
   } else if (exchangeId === 'HYPERLIQUID') {
-    localSymbol = localSymbol.replace(/^k/, '') + 'USD'
+    localSymbol = localSymbol.replace(/^k/, '') + 'USDT'
   } else if (exchangeId === 'PHEMEX') {
     localSymbol = localSymbol.replace(/^[a-z]/, '')
   }

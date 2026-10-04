@@ -16,7 +16,8 @@
     "cryptocom",
     "bitfinex",
     "bitstamp",
-    "kucoin"
+    "kucoin",
+    "hyperliquid"
   ],
   "influxHost": "aggr-parallax-influx",
   "influxPort": 8086,
@@ -108,6 +109,9 @@
     "KUCOIN:SOL-USDT",
     "KUCOIN:XBTUSDTM",
     "KUCOIN:ETHUSDTM",
-    "KUCOIN:SOLUSDTM"
+    "KUCOIN:SOLUSDTM",
+    "HYPERLIQUID:BTC",
+    "HYPERLIQUID:ETH",
+    "HYPERLIQUID:SOL"
   ]
 }
