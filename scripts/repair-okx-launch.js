@@ -19,7 +19,10 @@ async function main() {
   try {
     for (const market of config.pairs.filter(market => market.startsWith('OKEX:'))) {
       const pair = market.slice(5)
+      const bucket = Math.floor(from / config.influxTimeframe) * config.influxTimeframe
+      journal.recordIssue(market, bucket, 'initial_aggregated_trades')
       const count = await exchange.getMissingTrades({ pair, from, to }, 0, false)
+      journal.resolveIssue(market, bucket, 'initial_aggregated_trades')
       results.push({ market, recoveredExecutions: count })
       console.log(JSON.stringify(results.at(-1)))
     }
