@@ -275,6 +275,22 @@ repartition and concern buckets around 01:36:30–01:44:50 AEDT. These are
 recorded as incomplete pending native recovery verification. The new 24-hour
 window is due after **2026-10-06 02:05:48 AEDT**; no PASS is claimed yet.
 
+## Retention extension — 2026-10-05
+
+At 09:37 UTC (20:37 AEDT), the live `aggr_parallax` InfluxDB retention
+policies were verified at 30 days for `aggr_10s`, 365 days for `aggr_1m`, and
+728 days for `aggr_5m`. The last policy also retains five-minute open-interest
+snapshots for 728 days. The versioned `config.parallax.json` and data catalog
+now specify these values. Existing data was not backfilled.
+
+The live Parallax image still contains the previous durations. Its startup
+code only creates missing retention policies, so restarting that image does
+not overwrite the three live changes; rebuild from this source revision before
+recreating the database. Recent one-minute trade and five-minute open-interest
+queries succeeded after the change. The Parallax and InfluxDB pods remained
+Ready with zero restarts, and the `r6` soak Job remained active. The Influx
+dataset's 420 GiB quota is unchanged; watch its use as retention fills.
+
 ## Remaining release gate
 
 Run the new deployment for 24 hours and reconcile busy and quiet intervals

@@ -95,11 +95,11 @@ measurement has the `market` tag and these fields:
 
 | Retention policy | Measurement | Interval | Retention |
 | --- | --- | --- | --- |
-| `aggr_10s` | `trades_10s` | 10 seconds | 7 days |
+| `aggr_10s` | `trades_10s` | 10 seconds | 30 days |
 | `aggr_30s` | `trades_30s` | 30 seconds | 30 days |
-| `aggr_1m` | `trades_1m` | 1 minute | 30 days |
+| `aggr_1m` | `trades_1m` | 1 minute | 365 days |
 | `aggr_3m` | `trades_3m` | 3 minutes | 90 days |
-| `aggr_5m` | `trades_5m` | 5 minutes | 90 days |
+| `aggr_5m` | `trades_5m` | 5 minutes | 728 days |
 | `aggr_15m` | `trades_15m` | 15 minutes | 90 days |
 | `aggr_30m` | `trades_30m` | 30 minutes | 90 days |
 | `aggr_1h` | `trades_1h` | 1 hour | 104 weeks (728 days) |
@@ -139,8 +139,8 @@ the 66 trade markets. Collection started on 4 October 2026 at about
 
 | Measurement in `aggr_5m` | Tags | Fields | Retention |
 | --- | --- | --- | --- |
-| `open_interest` | `asset`, `venue`, exact `market` | `base` (one-sided open contracts in base units), `notional_usd` (nominal USD equivalent), `mark_price`, `source_time_ms` | 90 days |
-| `open_interest_total` | `asset` | `notional_usd` (sum of all four selected venues), `venues` (= 4) | 90 days |
+| `open_interest` | `asset`, `venue`, exact `market` | `base` (one-sided open contracts in base units), `notional_usd` (nominal USD equivalent), `mark_price`, `source_time_ms` | 728 days |
+| `open_interest_total` | `asset` | `notional_usd` (sum of all four selected venues), `venues` (= 4) | 728 days |
 
 Binance and Hyperliquid notional use base open interest × venue mark price;
 Bybit supplies its **single-side** open-interest value and OKX supplies `oiUsd`.
@@ -151,7 +151,7 @@ without an FX or stablecoin depeg adjustment. A total point is written only
 when all four venue snapshots for that asset pass validation. It counts open
 contracts once, rather than adding long and short sides. A missed sample leaves
 a gap; it is not forward-filled. The sampler uses the InfluxDB dataset, whose
-current ZFS quota is 420 GiB, and the existing 90-day `aggr_5m` retention
+current ZFS quota is 420 GiB, and the 728-day `aggr_5m` retention
 policy. The static Kubernetes claim still declares 350 GiB; see the
 [node-200 storage record](NODE200_STORAGE_2026-10-05.md).
 The Influx timestamp marks the start of the five-minute sampling bucket;
