@@ -2,6 +2,28 @@
 
 Status: **PARALLEL FEED LIVE; 24-HOUR VALIDATION PENDING**.
 
+## 11 October 2026 — journal retention for unresolved buckets
+
+The journal prune rule retains raw executions beyond seven days only while
+their exact market and ten-second bucket has a pending Influx write or an
+unresolved quality marker. Settled, unflagged executions retain the ordinary
+seven-day limit. Resolving the last marker makes an older bucket eligible for
+the next hourly prune. This is local validation evidence, not a second backup:
+the journal and InfluxDB are on node-200. A missing execution cannot be
+reconstructed from an Influx bar. The rule does not widen a recovery-start
+marker to the full outage interval; completeness still requires separate
+exchange reconciliation. See [the data catalog](DATA_CATALOG.md).
+
+At 11:54 UTC the rule was deployed on node-200 using the immutable local image
+`sha256:1292bb2ae39f41f281a7b437da528667e28032bdd4951576995037b2506ad4af`.
+The collector was Ready with zero restarts, and all 66 Influx market series had
+points within five minutes. The historical publication backlog had cleared:
+175 pending buckets were all from 11:54:00–11:54:30 UTC, the live settling
+window. The deployment restart created eight additional unresolved recovery
+intervals: three Bitget, two Bybit spot, and three Hyperliquid. Twelve more
+Bitstamp buckets received coarse-timestamp markers. These remain open for
+native-source reconciliation; the retention change does not repair them.
+
 ## 11 October 2026 — live publication and backlog throughput
 
 At 09:34 UTC before this change, 389,352 journal buckets were pending. All 66
@@ -105,7 +127,8 @@ aggregate count; otherwise each reported execution counts once. Side is taker
 side. `vbuy` and `vsell` are quote currency notional, calculated as price times
 base quantity. `lbuy` and `lsell` are liquidation quote notional. Native
 quantity and unit, trade ID, event time, normalized base size, and source are
-retained in the SQLite WAL journal for seven days. The journal deduplicates by
+retained in the SQLite WAL journal for seven days, or longer for buckets with
+pending writes or unresolved issues. The journal deduplicates by
 native trade ID and orders equal-time trades by ID for deterministic OHLC.
 
 `/health/feeds` reports connection request state, trades observed on the current

@@ -184,7 +184,9 @@ class Journal {
   prune(now = Date.now()) {
     const cutoff = now - SEVEN_DAYS
     this.db.prepare(`DELETE FROM events WHERE received_at < ? AND NOT EXISTS
-      (SELECT 1 FROM dirty_buckets d WHERE d.market=events.market AND d.bucket=events.bucket)`).run(cutoff)
+      (SELECT 1 FROM dirty_buckets d WHERE d.market=events.market AND d.bucket=events.bucket)
+      AND NOT EXISTS
+      (SELECT 1 FROM unresolved u WHERE u.market=events.market AND u.bucket=events.bucket)`).run(cutoff)
   }
 
   health() {
