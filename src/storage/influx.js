@@ -370,7 +370,20 @@ class InfluxStorage {
   // The journal owns replay and bar construction for the Parallax deployment.
   // A failed base write or rollup leaves every affected bucket dirty for retry.
   async flushJournal(journal, isExiting = false) {
-    const entries = journal.pending(120, isExiting ? Date.now() + 1 : Date.now() - 30000)
+    const now = Date.now()
+    const before = isExiting ? now + 1 : now - 30000
+    const recent = journal.pendingRecent(config.parallaxJournalRecentBatch,
+      now - config.parallaxJournalRecentWindow, before)
+    await this.flushJournalEntries(journal, recent)
+    const history = journal.pending(config.parallaxJournalHistoryBatch, before)
+    await this.flushJournalEntries(journal, history)
+    if (!this.lastJournalPrune || Date.now() - this.lastJournalPrune > 3600000) {
+      journal.prune()
+      this.lastJournalPrune = Date.now()
+    }
+  }
+
+  async flushJournalEntries(journal, entries) {
     if (!entries.length) return
     const bars = entries.map(({ market, bucket }) => journal.bar(market, bucket)).filter(Boolean)
     const points = bars.map(bar => {
@@ -400,10 +413,6 @@ class InfluxStorage {
       await this.resample({ from: minute, to: minute + 60000, markets: [...markets] })
     }
     journal.markWritten(entries)
-    if (!this.lastJournalPrune || Date.now() - this.lastJournalPrune > 3600000) {
-      journal.prune()
-      this.lastJournalPrune = Date.now()
-    }
   }
 
   /**

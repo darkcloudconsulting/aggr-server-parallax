@@ -1,6 +1,27 @@
-# Parallax feed release status — current as of 2026-10-05
+# Parallax feed release status — current as of 2026-10-11
 
 Status: **PARALLEL FEED LIVE; 24-HOUR VALIDATION PENDING**.
+
+## 11 October 2026 — live publication and backlog throughput
+
+At 09:34 UTC before this change, 389,352 journal buckets were pending. All 66
+feeds were live, but the newest InfluxDB 10-second point was from 8 October.
+The old writer selected only 120 oldest buckets every ten seconds. Node-200
+CPU, memory and disks had substantial headroom.
+
+The writer now publishes eligible recent buckets first, then up to 600 oldest
+historical buckets per pass. A new SQLite `(bucket, market)` index serves both
+selections. A failed write or rollup leaves the affected bucket pending for
+retry. The deployment image is pinned in `deploy/kubernetes.yaml`.
+
+At 09:41 UTC after rollout, all 66 feeds were connected and had received live
+trades within five minutes; all 66 InfluxDB market series had points within
+five minutes. The newest Influx point was roughly 40 seconds behind wall time.
+The pending queue fell from 384,995 to 381,388 buckets in 56 seconds, with no
+write failures in the observed collector logs. The indexed 600-row oldest
+lookup took 4 ms in a read-only check, versus 440 ms for the old 120-row
+scan-and-sort lookup. The historical queue and independent exchange recovery
+gaps remain open, so the 24-hour validation gate remains pending.
 
 This feed starts a new history. No bars are migrated or backfilled from the
 existing snow or SOL collectors. The original deployments and their data must

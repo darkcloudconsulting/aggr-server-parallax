@@ -122,7 +122,7 @@ spec:
         - { key: node.kubernetes.io/unschedulable, operator: Exists, effect: NoSchedule }
       containers:
         - name: server
-          image: local.parallax/aggr-server@sha256:2cff2df2a50ae6c2a5a1fa822c9ebf38a347943784b16cf99edce6f3189ac3a0
+          image: local.parallax/aggr-server@sha256:b6c7eafe44db8e1429e9c09f36a8b89fc11dc2c53d5f61600acf654273a80b13
           imagePullPolicy: Never
           ports: [{ containerPort: 3000, name: api }]
           resources:

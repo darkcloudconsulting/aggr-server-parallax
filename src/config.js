@@ -145,6 +145,9 @@ const defaultConfig = {
 
   // A durable event journal is enabled by the Parallax deployment config.
   parallaxJournalLocation: null,
+  parallaxJournalRecentWindow: 120000,
+  parallaxJournalRecentBatch: 256,
+  parallaxJournalHistoryBatch: 600,
   influxRetentionByTimeframe: null,
 
   // create new text file every N ms when storage is set to "file" (default 1h)

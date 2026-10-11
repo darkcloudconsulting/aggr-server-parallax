@@ -6,6 +6,12 @@ historical API, and bar schema remain the base design. The new deployment uses
 [`config.parallax.json`](config.parallax.json) and a durable execution journal
 to make corrections deterministic and restart-safe.
 
+The journal writer publishes eligible buckets from the last two minutes before
+draining older history. Each 10-second pass can publish up to 256 recent and
+600 historical buckets. The SQLite index on `(bucket, market)` keeps both
+lookups ordered without scanning the pending table. A bucket is removed from
+the pending queue only after its Influx point and rollups have been written.
+
 The deployment manifest is [`deploy/kubernetes.yaml`](deploy/kubernetes.yaml).
 It creates only new named volumes, deployments, and services in
 `ai-bot-feeder`, pinned to cordoned `snow-node-200`. The current partitioned

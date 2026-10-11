@@ -101,3 +101,22 @@ test('a late execution keeps a bucket dirty after an older write completes', () 
     assert.equal(f.journal.bar('OKEX:BTC-USDT', writing[0].bucket).vbuy, 201)
   } finally { f.close() }
 })
+
+test('recent pending buckets are selected before history using the time index', () => {
+  const f = fixture()
+  try {
+    const now = Date.now()
+    const old = { ...trade('old', 1000, 100), timestamp: now - 180000 }
+    const recent = { ...trade('recent', 1000, 101), timestamp: now - 50000 }
+    const open = { ...trade('open', 1000, 102), timestamp: now - 10000 }
+    f.journal.append([old, recent, open], 'live')
+    const rows = f.journal.pendingRecent(256, now - 120000, now - 30000)
+    assert.equal(rows.length, 1)
+    assert.equal(rows[0].bucket, Math.floor(recent.timestamp / 10000) * 10000)
+    assert.equal(f.journal.pending(1)[0].bucket, Math.floor(old.timestamp / 10000) * 10000)
+    const plan = f.journal.db.prepare(`EXPLAIN QUERY PLAN SELECT market, bucket, updated_at
+      FROM dirty_buckets WHERE bucket < ? ORDER BY bucket, market LIMIT ?`)
+      .all(now - 30000, 120)
+    assert.ok(plan.some(row => row.detail.includes('dirty_buckets_by_time')))
+  } finally { f.close() }
+})

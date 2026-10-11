@@ -39,6 +39,9 @@
     "1d": "104w"
   },
   "parallaxJournalLocation": "/var/lib/aggr-journal/events.sqlite",
+  "parallaxJournalRecentWindow": 120000,
+  "parallaxJournalRecentBatch": 256,
+  "parallaxJournalHistoryBatch": 600,
   "persistConnections": false,
   "indexExchangeBlacklist": [],
   "indexQuoteWhitelist": [
