@@ -28,6 +28,7 @@ class Journal {
         market TEXT NOT NULL, bucket INTEGER NOT NULL, updated_at INTEGER NOT NULL,
         PRIMARY KEY (market, bucket)
       );
+      CREATE INDEX IF NOT EXISTS dirty_buckets_by_time ON dirty_buckets(bucket, market);
       CREATE TABLE IF NOT EXISTS unresolved (
         market TEXT NOT NULL, bucket INTEGER NOT NULL, reason TEXT NOT NULL,
         first_seen INTEGER NOT NULL, last_seen INTEGER NOT NULL,
@@ -119,6 +120,12 @@ class Journal {
   pending(limit = 120, before = Date.now() - 30000) {
     return this.db.prepare(`SELECT market, bucket, updated_at FROM dirty_buckets
       WHERE bucket < ? ORDER BY bucket, market LIMIT ?`).all(before, limit)
+  }
+
+  pendingRecent(limit, since, before = Date.now() - 30000) {
+    return this.db.prepare(`SELECT market, bucket, updated_at FROM dirty_buckets
+      WHERE bucket >= ? AND bucket < ? ORDER BY bucket DESC, market DESC LIMIT ?`)
+      .all(since, before, limit)
   }
 
   bar(market, bucket) {
