@@ -120,3 +120,26 @@ test('recent pending buckets are selected before history using the time index', 
     assert.ok(plan.some(row => row.detail.includes('dirty_buckets_by_time')))
   } finally { f.close() }
 })
+
+test('prune retains only old trades in pending or unresolved buckets', () => {
+  const f = fixture()
+  try {
+    const flagged = trade('flagged', 1000, 100)
+    const settled = { ...trade('settled', 1000, 101), timestamp: flagged.timestamp + 10000 }
+    const pending = { ...trade('pending', 1000, 102), timestamp: flagged.timestamp + 20000 }
+    f.journal.append([flagged, settled, pending], 'live')
+    const rows = f.journal.pending()
+    f.journal.markWritten(rows.filter(row => row.bucket !== pending.timestamp - 1000))
+    f.journal.recordIssue('OKEX:BTC-USDT', flagged.timestamp - 1000, 'coarse_recovery_timestamp')
+    f.journal.db.prepare('UPDATE events SET received_at=?').run(Date.now() - 8 * 86400000)
+
+    f.journal.prune()
+    assert.deepEqual(f.journal.db.prepare('SELECT native_id FROM events ORDER BY native_id').all(),
+      [{ native_id: 'flagged' }, { native_id: 'pending' }])
+
+    f.journal.resolveIssue('OKEX:BTC-USDT', flagged.timestamp - 1000, 'coarse_recovery_timestamp')
+    f.journal.markWritten(f.journal.pending())
+    f.journal.prune()
+    assert.equal(f.journal.db.prepare('SELECT COUNT(*) AS count FROM events').get().count, 0)
+  } finally { f.close() }
+})

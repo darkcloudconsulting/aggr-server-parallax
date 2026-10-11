@@ -110,10 +110,22 @@ measurement has the `market` tag and these fields:
 
 InfluxDB also has its default `autogen` policy with unlimited duration. The
 Parallax writer targets the named `aggr_*` policies, so fully qualify a policy
-in ad hoc queries. The SQLite WAL execution journal is separately capped at
-seven days and contains native trade ID, timestamp, quantity and unit,
-normalized base quantity, price, side, source, and correction state. It is not
-the Grafana bar database.
+in ad hoc queries. The SQLite WAL execution journal ordinarily retains
+settled buckets for seven days and contains native trade ID, timestamp,
+quantity and unit, normalized base quantity, price, side, source, and
+correction state. A bucket with a pending Influx write or an unresolved quality
+issue retains its raw events past seven days. Once the write succeeds and all
+issues for that bucket are resolved, the next hourly prune removes events older
+than seven days. The issue marker itself is retained until explicitly resolved.
+Only the marked bucket is held; a recovery marker does not preserve every
+trade in a wider outage interval. The journal is on the same node as InfluxDB
+and is not an independent backup.
+
+InfluxDB stores derived bars rather than the native executions. Successful
+writing and rollup are necessary for a bucket to leave the pending queue, but
+the presence of an Influx bar does not prove that an exchange outage was fully
+recovered. Resolve a recovery or timestamp issue only after the appropriate
+native-source reconciliation; do not clear it merely because a bar exists.
 
 The service's `/health/feeds` endpoint reports each market's current
 subscription state, last trade, recent interval quality, pending writes, and
