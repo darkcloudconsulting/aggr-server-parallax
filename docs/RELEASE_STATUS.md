@@ -1,6 +1,50 @@
-# Parallax feed release status — current as of 2026-10-11
+# Parallax feed release status — current as of 2026-10-15
 
 Status: **PARALLEL FEED LIVE; 24-HOUR VALIDATION PENDING**.
+
+## 15 October 2026 — sliced journal prune
+
+The hourly seven-day journal prune was one synchronous SQLite `DELETE` over a
+40 GB `events.sqlite`. It held the Node event loop for about a minute each
+hour, so the 1 s liveness probe on `GET /` failed (74 failures between 10-11
+11:55 and 10-15) and the kubelet killed the collector five times: 10-12 01:03,
+10-13 00:09, 10-14 12:33, 10-15 02:25 and 02:31 UTC. The failures drifted about
+one minute per hour because the next prune was timed from the previous one's
+end. A restart pruned on its first flush, so the 02:25 restart was killed
+again at 02:31 during trade recovery. Memory was never the cause: the server
+held about 0.2 GiB of its 5 GiB limit, and InfluxDB did not restart.
+
+The prune now deletes at most 500 expired events per statement in
+`(received_at, rowid)` order and yields to the event loop between slices. It
+runs beside the flush chain, one at a time, never on the exit flush, and first
+15 minutes after start; each run is timed from the previous start. The
+retention rule is unchanged. A test shows the sliced prune leaves exactly the
+rows of the old statement. On 1.5 million synthetic events on NVMe, 500-row
+slices took at most 59 ms (p99 49 ms). The prune touches only the local SQLite
+journal; InfluxDB data is governed by its own retention policies.
+
+Image `local.parallax/aggr-server:journal-prune-20261015`
+(`sha256:b03188c24ab5f498f399ea9f82205eb79bae4feece66a6974dc8f6bc581ca95c`) is
+the running `journal-retain-20261011` image with only `journal.js`,
+`influx.js` and `config.js` replaced; that image's `/app/src` was first
+verified identical to `a8ebfad`.
+
+**Rollout outage was longer than planned.** The image was imported with
+`k0s ctr -n k8s.io images import`, which created only the tag reference. The
+Deployment pins the image by digest with `imagePullPolicy: Never`, so the new
+pod failed with `ErrImageNeverPull` after `Recreate` had already stopped the
+old one. Adding the digest reference fixed it:
+`k0s ctr -n k8s.io images tag <tag> local.parallax/aggr-server@sha256:<digest>`
+then deleting the waiting pod. **Before any future rollout, confirm
+`k0s ctr -n k8s.io images ls` lists the exact `@sha256:` reference that the
+manifest names.** The collector was disconnected from 11:08:05 to 11:12:36 UTC
+(about 4.5 minutes). At 11:13:16 all 66 feeds were connected and 65 had a live
+trade within five minutes (`BITGET:SOLUSD`, a known quiet contract, had not).
+The outage created 109 unresolved journal markers: 64 Bitstamp
+coarse-timestamp buckets; recent-trade endpoints could not cover the interval
+for KuCoin (5), Bybit (6), Bitget (6) and Hyperliquid (3); OKX recovery (5)
+was still pending. These need native-source reconciliation like earlier
+rollout gaps.
 
 ## 11 October 2026 — journal retention for unresolved buckets
 

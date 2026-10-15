@@ -143,3 +143,71 @@ test('prune retains only old trades in pending or unresolved buckets', () => {
     assert.equal(f.journal.db.prepare('SELECT COUNT(*) AS count FROM events').get().count, 0)
   } finally { f.close() }
 })
+
+// Mixed journal: 30 executions over 10 buckets, two ages with tied received_at
+// values so slices split ties, one bucket pending and one with an open marker.
+function seedMixed(journal) {
+  const base = Math.floor((Date.now() - 600000) / 10000) * 10000
+  const trades = []
+  for (let i = 0; i < 30; i++) {
+    trades.push({ exchange: 'OKEX', pair: 'BTC-USDT', id: `t${String(i).padStart(2, '0')}`,
+      timestamp: base + (i % 10) * 10000 + 1000 + i, price: 100 + i, size: 1, side: 'buy', count: 1 })
+  }
+  journal.append(trades, 'live')
+  journal.markWritten(journal.pending().filter(row => row.bucket !== base + 30000))
+  journal.recordIssue('OKEX:BTC-USDT', base + 70000, 'coarse_recovery_timestamp')
+  journal.db.prepare('UPDATE events SET received_at=? WHERE native_id < ?').run(Date.now() - 9 * 86400000, 't12')
+  journal.db.prepare('UPDATE events SET received_at=? WHERE native_id >= ? AND native_id < ?')
+    .run(Date.now() - 8 * 86400000, 't12', 't25')
+}
+
+const remaining = journal => journal.db.prepare('SELECT native_id FROM events ORDER BY native_id')
+  .all().map(row => row.native_id)
+
+test('sliced prune removes exactly what the single-statement rule removed', () => {
+  const reference = fixture()
+  const sliced = fixture()
+  try {
+    seedMixed(reference.journal)
+    seedMixed(sliced.journal)
+    const cutoff = Date.now() - 7 * 86400000
+    reference.journal.db.prepare(`DELETE FROM events WHERE received_at < ? AND NOT EXISTS
+      (SELECT 1 FROM dirty_buckets d WHERE d.market=events.market AND d.bucket=events.bucket)
+      AND NOT EXISTS
+      (SELECT 1 FROM unresolved u WHERE u.market=events.market AND u.bucket=events.bucket)`).run(cutoff)
+    for (const limit of [1, 3, 7, 1000]) {
+      assert.ok(sliced.journal.prune(Date.now(), limit) >= 0)
+      assert.deepEqual(remaining(sliced.journal), remaining(reference.journal), `limit ${limit}`)
+    }
+    assert.equal(remaining(reference.journal).length, 10)
+  } finally { reference.close(); sliced.close() }
+})
+
+test('gradual prune yields to the event loop between slices', async () => {
+  const f = fixture()
+  try {
+    seedMixed(f.journal)
+    const before = remaining(f.journal).length
+    let interleaved = 0
+    const tick = setInterval(() => interleaved++, 0)
+    const running = f.journal.pruneGradually(Date.now(), 2)
+    assert.equal(remaining(f.journal).length, before - 2)
+    const deleted = await running
+    clearInterval(tick)
+    assert.equal(deleted, 20)
+    assert.equal(remaining(f.journal).length, before - 20)
+    assert.ok(interleaved > 0, 'timers ran while the prune was in progress')
+  } finally { f.close() }
+})
+
+test('prune plan walks the received_at index', () => {
+  const f = fixture()
+  try {
+    f.journal.prune()
+    const plan = f.journal.db.prepare(`EXPLAIN QUERY PLAN SELECT received_at, rowid FROM events
+      WHERE received_at < 1 AND received_at >= 0 AND (received_at, rowid) > (0, 0)
+      ORDER BY received_at, rowid LIMIT 1 OFFSET 1`).all().map(row => row.detail).join(' | ')
+    assert.match(plan, /events_received/)
+    assert.doesNotMatch(plan, /TEMP B-TREE/)
+  } finally { f.close() }
+})

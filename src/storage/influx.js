@@ -377,10 +377,21 @@ class InfluxStorage {
     await this.flushJournalEntries(journal, recent)
     const history = journal.pending(config.parallaxJournalHistoryBatch, before)
     await this.flushJournalEntries(journal, history)
-    if (!this.lastJournalPrune || Date.now() - this.lastJournalPrune > 3600000) {
-      journal.prune()
-      this.lastJournalPrune = Date.now()
-    }
+    if (!isExiting) this.scheduleJournalPrune(journal)
+  }
+
+  // The prune runs beside the flush chain rather than inside it, one at a time,
+  // never on exit, and first runs a while after start so it does not compete
+  // with a restart's trade recovery. Runs are anchored to their start, so the
+  // interval does not drift by the prune's own duration.
+  scheduleJournalPrune(journal, now = Date.now()) {
+    this.nextJournalPrune ??= now + config.parallaxJournalPruneStartDelay
+    if (this.journalPruning || now < this.nextJournalPrune) return
+    this.nextJournalPrune = now + config.parallaxJournalPruneInterval
+    this.journalPruning = journal.pruneGradually(now, config.parallaxJournalPruneBatch)
+      .then(deleted => console.log(`[storage/journal] pruned ${deleted} expired events in ${Date.now() - now}ms`))
+      .catch(error => console.error('[storage/journal] prune failed; retrying next interval', error))
+      .finally(() => { this.journalPruning = null })
   }
 
   async flushJournalEntries(journal, entries) {

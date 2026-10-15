@@ -91,3 +91,36 @@ test('a failed recent rollup leaves both live and historical buckets for retry',
     fs.rmSync(dir, { recursive: true, force: true })
   }
 })
+
+test('journal prune waits for the start delay, never overlaps, never runs on exit', async () => {
+  const storage = new InfluxStorage()
+  let calls = 0
+  let finish
+  const journal = { pruneGradually: () => { calls++; return new Promise(resolve => { finish = resolve }) } }
+  const start = 1_000_000_000
+  const { parallaxJournalPruneStartDelay: delay, parallaxJournalPruneInterval: interval } = config
+  storage.scheduleJournalPrune(journal, start)
+  storage.scheduleJournalPrune(journal, start + delay - 1)
+  assert.equal(calls, 0)
+  storage.scheduleJournalPrune(journal, start + delay)
+  storage.scheduleJournalPrune(journal, start + delay + interval + 1)
+  assert.equal(calls, 1, 'a running prune is not started twice')
+  finish(0)
+  await storage.journalPruning
+  storage.scheduleJournalPrune(journal, start + delay + interval - 1)
+  assert.equal(calls, 1, 'next run is anchored to the previous start')
+  storage.scheduleJournalPrune(journal, start + delay + interval)
+  assert.equal(calls, 2)
+  finish(0)
+  await storage.journalPruning
+
+  const exiting = new InfluxStorage()
+  exiting.nextJournalPrune = 0
+  exiting.writePoints = async () => {}
+  exiting.resample = async () => {}
+  const idle = { pendingRecent: () => [], pending: () => [], pruneGradually: () => { calls++; return Promise.resolve(0) } }
+  await exiting.flushJournal(idle, true)
+  assert.equal(calls, 2, 'no prune on the exit flush')
+  await exiting.flushJournal(idle)
+  assert.equal(calls, 3)
+})
