@@ -148,6 +148,9 @@ const defaultConfig = {
   parallaxJournalRecentWindow: 120000,
   parallaxJournalRecentBatch: 256,
   parallaxJournalHistoryBatch: 600,
+  parallaxJournalPruneInterval: 3600000,
+  parallaxJournalPruneStartDelay: 900000,
+  parallaxJournalPruneBatch: 500,
   influxRetentionByTimeframe: null,
 
   // create new text file every N ms when storage is set to "file" (default 1h)

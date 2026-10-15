@@ -4,6 +4,11 @@ const path = require('path')
 const Database = require('better-sqlite3')
 
 const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000
+// Old executions stay while their bucket has a pending write or an open marker.
+const RETAINED = `NOT EXISTS
+  (SELECT 1 FROM dirty_buckets d WHERE d.market=events.market AND d.bucket=events.bucket)
+  AND NOT EXISTS
+  (SELECT 1 FROM unresolved u WHERE u.market=events.market AND u.bucket=events.bucket)`
 
 class Journal {
   constructor(location, timeframe = 10000) {
@@ -181,12 +186,58 @@ class Journal {
       }))
   }
 
-  prune(now = Date.now()) {
+  // One bounded slice of the seven-day prune, walking events_received in
+  // (received_at, rowid) order after `cursor`. better-sqlite3 is synchronous, so
+  // a single DELETE over the whole journal blocked the event loop for about a
+  // minute every hour and failed the liveness probe. The retention rule is
+  // unchanged and is evaluated per slice. Returns the next cursor, or null when
+  // the expired range is exhausted.
+  pruneChunk(cutoff, cursor = { at: -1, id: -1 }, limit = 500) {
+    const range = { cutoff, at: cursor.at, id: cursor.id }
+    this.pruneStatements ??= {
+      end: this.db.prepare(`SELECT received_at AS at, rowid AS id FROM events
+        WHERE received_at < @cutoff AND received_at >= @at AND (received_at, rowid) > (@at, @id)
+        ORDER BY received_at, rowid LIMIT 1 OFFSET @offset`),
+      // No cutoff term here: the end row is already below it, and a second
+      // upper bound lets the planner scan to the cutoff on every slice.
+      slice: this.db.prepare(`DELETE FROM events
+        WHERE received_at >= @at AND (received_at, rowid) > (@at, @id)
+        AND received_at <= @endAt AND (received_at, rowid) <= (@endAt, @endId) AND ${RETAINED}`),
+      rest: this.db.prepare(`DELETE FROM events
+        WHERE received_at < @cutoff AND received_at >= @at AND (received_at, rowid) > (@at, @id)
+        AND ${RETAINED}`)
+    }
+    const end = this.pruneStatements.end.get({ ...range, offset: limit - 1 })
+    const deleted = end
+      ? this.pruneStatements.slice.run({ at: range.at, id: range.id, endAt: end.at, endId: end.id }).changes
+      : this.pruneStatements.rest.run(range).changes
+    return { deleted, cursor: end || null }
+  }
+
+  prune(now = Date.now(), limit = 500) {
     const cutoff = now - SEVEN_DAYS
-    this.db.prepare(`DELETE FROM events WHERE received_at < ? AND NOT EXISTS
-      (SELECT 1 FROM dirty_buckets d WHERE d.market=events.market AND d.bucket=events.bucket)
-      AND NOT EXISTS
-      (SELECT 1 FROM unresolved u WHERE u.market=events.market AND u.bucket=events.bucket)`).run(cutoff)
+    let step = { deleted: 0, cursor: undefined }
+    let deleted = 0
+    do {
+      step = this.pruneChunk(cutoff, step.cursor, limit)
+      deleted += step.deleted
+    } while (step.cursor)
+    return deleted
+  }
+
+  // Same as prune(), yielding to the event loop between slices so probes,
+  // websocket frames and flushes are served while a large backlog expires.
+  async pruneGradually(now = Date.now(), limit = 500) {
+    const cutoff = now - SEVEN_DAYS
+    let cursor
+    let deleted = 0
+    for (;;) {
+      const step = this.pruneChunk(cutoff, cursor, limit)
+      deleted += step.deleted
+      if (!step.cursor) return deleted
+      cursor = step.cursor
+      await new Promise(resolve => setImmediate(resolve))
+    }
   }
 
   health() {
