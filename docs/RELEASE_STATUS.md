@@ -1,6 +1,35 @@
-# Parallax feed release status — current as of 2026-10-15
+# Parallax feed release status — current as of 2026-10-16
 
 Status: **PARALLEL FEED LIVE; 24-HOUR VALIDATION PENDING**.
+
+## 16 October 2026 — moved to node 201
+
+The feed now runs on `snow-node-201` ([`deploy/node201.yaml`](../deploy/node201.yaml)).
+Node 200 keeps resetting (corrected CPU parity machine-checks; the owner has
+stopped trying to keep it), and its InfluxDB had no copy anywhere else until
+12:59 UTC that day.
+
+- A second InfluxDB and server started on 201 with a fresh journal; no SQLite
+  file was copied. With the journal on 201's OS disk the server was killed by
+  its 1 s liveness probe three times (fsync 6.5 ms against 66 µs on node 200's
+  SN200); on `zfs-201/aggr-journal` with `sync=disabled` it has run without a
+  restart since 14:31:07 UTC.
+- Cutoff 14:32:00 UTC. Everything before it came from node 200's final backup
+  (15:02:39), with open interest up to the 15:02:27 switch;
+  `scripts/backfill-history.js` verified 14 of 14 retention-policy/measurement
+  pairs, and `scripts/resample-range.js` rebuilt the bars that straddle the
+  cutoff with the server's own `resample()`.
+- Against node 200's InfluxDB, every closed bar of 10-16 at 5m, 15m, 1h and 6h
+  is identical; at 10s and 1m node 201 has the old server's final 20–40
+  seconds, which never reached node 200's database.
+- **What the new journal does not inherit:** node 200's seven days of raw
+  executions and its unresolved quality markers (109 from the outage plus 8
+  restart markers). Bars before 14:32 are final as copied. Node 200's journal
+  is archived cold on the NAS (`node201-rebuild-20261016/aggr-journal-200/`).
+- Not done: Snowgraf panels were not opened by eye; the datasource's Service
+  returned fresh bars.
+
+Full record: [`NODE201_MOVE_2026-10-16.md`](NODE201_MOVE_2026-10-16.md).
 
 ## 15 October 2026 — sliced journal prune
 

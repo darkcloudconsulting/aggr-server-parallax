@@ -1,0 +1,116 @@
+# Scheduled comparison for the node 200 -> 201 move
+# (docs/NODE201_MOVE_2026-10-16.md): trades_1m for [T0, T0+3h) per market,
+# node 200's InfluxDB against node 201's, posted to @snow_alerts_bot at
+# 03:10 and 03:40 UTC on 2026-10-17 whether it passes or not, so a missing
+# message means it did not run. FAIL = any market whose bar count or trade
+# counts (cbuy + csell) differ by more than 1 %, or a market only one side has.
+#
+# The schedule would repeat every 17 October: delete this CronJob and its
+# ConfigMap once the switch is done (owed in the move record).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: aggr-node201-compare-script
+  namespace: monitoring
+  labels: {app: aggr-node201-compare}
+data:
+  compare.py: |
+    import json, os, sys, urllib.parse, urllib.request
+    T0, T1 = os.environ["T0"], os.environ["T1"]
+    OLD, NEW = os.environ["OLD_URL"], os.environ["NEW_URL"]
+    LIMIT = float(os.environ.get("LIMIT_PCT", "1"))
+    Q = ("SELECT count(cbuy) AS bars, sum(cbuy) AS cbuy, sum(csell) AS csell, sum(vbuy) AS vbuy, "
+         "sum(vsell) AS vsell FROM aggr_1m.trades_1m WHERE time >= '%s' AND time < '%s' GROUP BY market" % (T0, T1))
+
+    def notify(text):
+        if not os.environ.get("BOT_TOKEN"):
+            return
+        body = urllib.parse.urlencode({"chat_id": os.environ["CHAT_ID"], "text": text}).encode()
+        urllib.request.urlopen("https://api.telegram.org/bot" + os.environ["BOT_TOKEN"] + "/sendMessage",
+                               data=body, timeout=20).read()
+
+    def bars(url):
+        p = urllib.parse.urlencode({"db": "aggr_parallax", "q": Q})
+        r = json.load(urllib.request.urlopen(url + "/query?" + p, timeout=60))["results"][0]
+        out = {}
+        for s in r.get("series", []):
+            row = dict(zip(s["columns"], s["values"][0]))
+            out[s["tags"]["market"]] = {k: row[k] or 0 for k in ("bars", "cbuy", "csell", "vbuy", "vsell")}
+        return out
+
+    def pct(a, b):
+        return 0.0 if a == b else 100.0 * abs(a - b) / max(abs(a), abs(b), 1)
+
+    try:
+        old, new = bars(OLD), bars(NEW)
+    except Exception as e:
+        print("ERROR", e, flush=True)
+        notify("aggr node-201 compare could not run (%s .. %s): %s. Check both InfluxDBs in ai-bot-feeder." % (T0, T1, e))
+        sys.exit(2)
+    bad, rows = [], []
+    for m in sorted(set(old) | set(new)):
+        o, n = old.get(m), new.get(m)
+        if not o or not n:
+            bad.append("%s only on %s" % (m, "200" if o else "201"))
+            continue
+        d = {k: pct(o[k], n[k]) for k in o}
+        rows.append((max(d["bars"], pct(o["cbuy"] + o["csell"], n["cbuy"] + n["csell"])), m, d, o, n))
+        if rows[-1][0] > LIMIT:
+            bad.append("%s bars %d/%d trades %d/%d (%.2f %%)" % (m, o["bars"], n["bars"], o["cbuy"] + o["csell"],
+                                                                 n["cbuy"] + n["csell"], rows[-1][0]))
+    rows.sort(reverse=True)
+    for worst, m, d, o, n in rows:
+        print("%-40s bars %5d/%5d  trades %9d/%9d  vol %.3f%%  worst %.3f%%" % (
+            m, o["bars"], n["bars"], o["cbuy"] + o["csell"], n["cbuy"] + n["csell"], max(d["vbuy"], d["vsell"]), worst))
+    verdict = "FAIL" if bad else "PASS"
+    summary = "%s: %d markets on 200, %d on 201, %d over %.0f %%" % (verdict, len(old), len(new), len(bad), LIMIT)
+    print(summary, flush=True)
+    worst = "; ".join("%s %.2f %%" % (m, w) for w, m, *_ in rows[:3])
+    notify("aggr node-201 compare %s .. %s %s. Worst: %s.%s Next: backfill and switch, "
+           "docs/NODE201_MOVE_2026-10-16.md (aggr-server-parallax)." % (
+               T0, T1, summary, worst, (" Over limit: " + "; ".join(bad[:8]) + ".") if bad else ""))
+    sys.exit(1 if bad else 0)
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: aggr-node201-compare
+  namespace: monitoring
+  labels: {app: aggr-node201-compare}
+spec:
+  schedule: "10,40 3 17 10 *"
+  timeZone: "Etc/UTC"
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 1500
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      activeDeadlineSeconds: 600
+      template:
+        metadata:
+          labels: {app: aggr-node201-compare}
+        spec:
+          restartPolicy: Never
+          containers:
+          - name: compare
+            image: python:3.12-alpine
+            command: ["python3", "/script/compare.py"]
+            env:
+            - {name: T0, value: "2026-10-17T00:00:00Z"}
+            - {name: T1, value: "2026-10-17T03:00:00Z"}
+            - {name: OLD_URL, value: "http://aggr-parallax-influx.ai-bot-feeder.svc.cluster.local:8086"}
+            - {name: NEW_URL, value: "http://aggr-parallax-influx-201.ai-bot-feeder.svc.cluster.local:8086"}
+            - name: BOT_TOKEN
+              valueFrom: {secretKeyRef: {name: storage-alerts-telegram, key: bot-token}}
+            - name: CHAT_ID
+              valueFrom: {secretKeyRef: {name: storage-alerts-telegram, key: chat-id}}
+            resources:
+              requests: {cpu: 10m, memory: 32Mi}
+              limits: {cpu: 200m, memory: 128Mi}
+            volumeMounts:
+            - {name: script, mountPath: /script}
+          volumes:
+          - name: script
+            configMap: {name: aggr-node201-compare-script}

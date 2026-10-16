@@ -162,10 +162,12 @@ venue total treats USDT- and USDC-denominated values as nominal USD equivalents
 without an FX or stablecoin depeg adjustment. A total point is written only
 when all four venue snapshots for that asset pass validation. It counts open
 contracts once, rather than adding long and short sides. A missed sample leaves
-a gap; it is not forward-filled. The sampler uses the InfluxDB dataset, whose
-current ZFS quota is 420 GiB, and the 728-day `aggr_5m` retention
-policy. The static Kubernetes claim still declares 350 GiB; see the
-[node-200 storage record](NODE200_STORAGE_2026-10-05.md).
+a gap; it is not forward-filled. The sampler uses the InfluxDB dataset and the
+728-day `aggr_5m` retention policy. Since 2026-10-16 the InfluxDB lives on node
+201, ZFS dataset `zfs-201/aggr-influx` (`/srv/aggr-201/influx`, refquota 100G,
+claim `aggr-parallax-influx-201`); the history to that date was copied from
+node 200 ([move record](NODE201_MOVE_2026-10-16.md)). Node 200's former
+location (420 GiB quota) is in the [node-200 storage record](NODE200_STORAGE_2026-10-05.md).
 The Influx timestamp marks the start of the five-minute sampling bucket;
 `source_time_ms` retains the venue's source timestamp when supplied. See
 [Bybit's open interest field definitions](https://bybit-exchange.github.io/docs/v5/market/open-interest),

@@ -18,7 +18,7 @@ spec:
         spec:
           restartPolicy: OnFailure
           nodeSelector:
-            kubernetes.io/hostname: snow-node-200
+            kubernetes.io/hostname: snow-node-201
           tolerations:
             - key: node.kubernetes.io/unschedulable
               operator: Exists

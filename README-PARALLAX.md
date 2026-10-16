@@ -12,13 +12,17 @@ draining older history. Each 10-second pass can publish up to 256 recent and
 lookups ordered without scanning the pending table. A bucket is removed from
 the pending queue only after its Influx point and rollups have been written.
 
-The deployment manifest is [`deploy/kubernetes.yaml`](deploy/kubernetes.yaml).
-It creates only new named volumes, deployments, and services in
-`ai-bot-feeder`, pinned to cordoned `snow-node-200`. The current partitioned
-disk layout, effective quotas, and Kubernetes capacity mismatch are recorded
-in the [node-200 storage record](docs/NODE200_STORAGE_2026-10-05.md). The
-original whole-disk [`provision-node200.sh`](deploy/provision-node200.sh) is
-retired and must not be used for the current layout.
+The deployment manifest is [`deploy/node201.yaml`](deploy/node201.yaml):
+InfluxDB and the server in `ai-bot-feeder` on `snow-node-201`, on the ZFS
+datasets `zfs-201/aggr-influx` and `zfs-201/aggr-journal` (`sync=disabled`;
+the journal's `synchronous=FULL` SQLite commits run on the event loop, so slow
+fsync stalls the server). The feed moved there from unstable node 200 on
+2026-10-16; the move, the backfill and its verification are in
+[`docs/NODE201_MOVE_2026-10-16.md`](docs/NODE201_MOVE_2026-10-16.md).
+[`deploy/kubernetes.yaml`](deploy/kubernetes.yaml), the
+[node-200 storage record](docs/NODE200_STORAGE_2026-10-05.md) and
+[`provision-node200.sh`](deploy/provision-node200.sh) are historical: the
+node-200 pair is at 0 and its data is kept until the owner signs off.
 
 The current market matrix, exclusions, data semantics, database choice, and
 release gate are in [`docs/RELEASE_STATUS.md`](docs/RELEASE_STATUS.md).
