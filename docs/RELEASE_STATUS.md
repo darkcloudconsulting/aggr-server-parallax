@@ -31,6 +31,13 @@ stopped trying to keep it), and its InfluxDB had no copy anywhere else until
 
 Full record: [`NODE201_MOVE_2026-10-16.md`](NODE201_MOVE_2026-10-16.md).
 
+**23:54 UTC: node 200's pair removed** (Deployments, PVCs, PVs, the
+`aggr-parallax` pool), after its InfluxDB backup and journal archive were
+re-verified off the node. **History gap:** about 50 of 66 markets have no bars
+from 2026-10-06 ~06:53 to 2026-10-11 ~02:35 UTC. Node 200's journal has no
+executions for them either, so nothing could be backfilled from it
+([`NODE200_REMOVAL_2026-10-16.md`](NODE200_REMOVAL_2026-10-16.md)).
+
 ## 15 October 2026 — sliced journal prune
 
 The hourly seven-day journal prune was one synchronous SQLite `DELETE` over a

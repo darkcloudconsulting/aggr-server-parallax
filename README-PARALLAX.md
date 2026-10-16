@@ -22,7 +22,11 @@ fsync stalls the server). The feed moved there from unstable node 200 on
 [`deploy/kubernetes.yaml`](deploy/kubernetes.yaml), the
 [node-200 storage record](docs/NODE200_STORAGE_2026-10-05.md) and
 [`provision-node200.sh`](deploy/provision-node200.sh) are historical: the
-node-200 pair is at 0 and its data is kept until the owner signs off.
+node-200 pair and its ZFS pool were removed on 2026-10-16 after its data was
+verified on node 201, snow-controller and the NAS
+([`docs/NODE200_REMOVAL_2026-10-16.md`](docs/NODE200_REMOVAL_2026-10-16.md)).
+The history has a gap for about 50 markets from 2026-10-06 to 2026-10-11
+that node 200 could not fill (same record).
 
 The current market matrix, exclusions, data semantics, database choice, and
 release gate are in [`docs/RELEASE_STATUS.md`](docs/RELEASE_STATUS.md).
