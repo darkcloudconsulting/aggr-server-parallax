@@ -1,7 +1,7 @@
 // Copy bar history from a restored database into the live one, then verify it.
 //
 // Used for the node 200 -> node 201 move (docs/NODE201_MOVE_2026-10-16.md):
-// the new instance captures every bar from T0 (a UTC midnight) itself, and
+// the new instance captures every bar from T0 itself, and
 // everything before T0 comes from node 200's backup, restored next to the live
 // database with `influxd restore -portable -db aggr_parallax -newdb <source>`.
 // Open-interest snapshots are copied up to the switch time instead, because
@@ -35,8 +35,12 @@ const EXECUTE = args.execute === true
 const VERIFY_ONLY = args['verify-only'] === true
 const DAY = 86400000
 
-if (!Number.isFinite(T0) || T0 % DAY) {
-  console.error('--t0 must be a UTC midnight, e.g. 2026-10-17T00:00:00Z')
+// T0 is the first instant from which the new instance's own bars are complete.
+// A UTC midnight needs nothing else; any other cutoff must be followed by
+// scripts/resample-range.js --from <t0>, which rebuilds the bars that straddle
+// it from the 10s bars (the base timeframe, so T0 must be 10s-aligned).
+if (!Number.isFinite(T0) || T0 % 10000) {
+  console.error('--t0 must be on a 10 s boundary, e.g. 2026-10-16T14:32:00Z')
   process.exit(2)
 }
 if (!Number.isFinite(SWITCH) || SWITCH < T0) {
