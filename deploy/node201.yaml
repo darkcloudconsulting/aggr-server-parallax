@@ -1,0 +1,153 @@
+# aggr-parallax on snow-node-201 (move from node 200, 2026-10-16;
+# docs/NODE201_MOVE_2026-10-16.md). Runs beside the node-200 instance until the
+# switch; nothing here touches node 200's objects.
+#
+# Static PVs only (controller CLAUDE.md landmine 1). The paths are ZFS datasets
+# of the rebuilt zfs-201 pool:
+#   zfs-201/aggr-influx   -> /srv/aggr-201/influx   refquota 100G
+#   zfs-201/aggr-journal  -> /srv/aggr-201/journal  refquota 150G, recordsize 16K
+#
+# The image config says influxHost "aggr-parallax-influx", which is node 200's
+# Service until the switch. INFLUX_HOST overrides it (src/config.js applies
+# env overrides because the image sets RUNNING_IN_DOCKER=true); the startup log
+# line "overriding 'influxHost'" proves it took. Service links are off so no
+# injected *_PORT/*_HOST variable can collide with a config key the same way.
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: aggr-parallax-influx-node201
+spec:
+  capacity: { storage: 100Gi }
+  volumeMode: Filesystem
+  accessModes: [ReadWriteOnce]
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  local: { path: /srv/aggr-201/influx }
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - { key: kubernetes.io/hostname, operator: In, values: [snow-node-201] }
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: aggr-parallax-journal-node201
+spec:
+  capacity: { storage: 150Gi }
+  volumeMode: Filesystem
+  accessModes: [ReadWriteOnce]
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  local: { path: /srv/aggr-201/journal }
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - { key: kubernetes.io/hostname, operator: In, values: [snow-node-201] }
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: aggr-parallax-influx-201
+  namespace: ai-bot-feeder
+spec:
+  accessModes: [ReadWriteOnce]
+  resources: { requests: { storage: 100Gi } }
+  storageClassName: ""
+  volumeName: aggr-parallax-influx-node201
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: aggr-parallax-journal-201
+  namespace: ai-bot-feeder
+spec:
+  accessModes: [ReadWriteOnce]
+  resources: { requests: { storage: 150Gi } }
+  storageClassName: ""
+  volumeName: aggr-parallax-journal-node201
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aggr-parallax-influx-201
+  namespace: ai-bot-feeder
+spec:
+  replicas: 1
+  strategy: { type: Recreate }
+  selector: { matchLabels: { app: aggr-parallax-influx-201 } }
+  template:
+    metadata: { labels: { app: aggr-parallax-influx-201 } }
+    spec:
+      nodeSelector: { kubernetes.io/hostname: snow-node-201 }
+      containers:
+        - name: influxdb
+          image: influxdb@sha256:cc84d52f03197f67297cb30321b3a8849de9605122436244834ffc5adca3159d
+          imagePullPolicy: IfNotPresent
+          ports: [{ containerPort: 8086, name: influxql }]
+          env:
+            - { name: INFLUXDB_REPORTING_DISABLED, value: "true" }
+          resources:
+            requests: { cpu: 500m, memory: 1Gi }
+            limits: { cpu: "4", memory: 8Gi }
+          readinessProbe:
+            httpGet: { path: /ping, port: influxql }
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /ping, port: influxql }
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          volumeMounts:
+            - { name: data, mountPath: /var/lib/influxdb }
+      volumes:
+        - name: data
+          persistentVolumeClaim: { claimName: aggr-parallax-influx-201 }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: aggr-parallax-influx-201
+  namespace: ai-bot-feeder
+spec:
+  selector: { app: aggr-parallax-influx-201 }
+  ports: [{ name: influxql, port: 8086, targetPort: influxql }]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aggr-server-parallax-201
+  namespace: ai-bot-feeder
+spec:
+  replicas: 1
+  strategy: { type: Recreate }
+  selector: { matchLabels: { app: aggr-server-parallax-201 } }
+  template:
+    metadata: { labels: { app: aggr-server-parallax-201 } }
+    spec:
+      nodeSelector: { kubernetes.io/hostname: snow-node-201 }
+      enableServiceLinks: false
+      containers:
+        - name: server
+          image: local.parallax/aggr-server@sha256:b03188c24ab5f498f399ea9f82205eb79bae4feece66a6974dc8f6bc581ca95c
+          imagePullPolicy: Never
+          env:
+            - { name: INFLUX_HOST, value: aggr-parallax-influx-201 }
+          ports: [{ containerPort: 3000, name: api }]
+          resources:
+            requests: { cpu: 500m, memory: 1Gi }
+            limits: { cpu: "4", memory: 5Gi }
+          readinessProbe:
+            httpGet: { path: /health/feeds, port: api }
+            initialDelaySeconds: 15
+            periodSeconds: 15
+          livenessProbe:
+            httpGet: { path: /, port: api }
+            initialDelaySeconds: 60
+            periodSeconds: 30
+          volumeMounts:
+            - { name: journal, mountPath: /var/lib/aggr-journal }
+      volumes:
+        - name: journal
+          persistentVolumeClaim: { claimName: aggr-parallax-journal-201 }
