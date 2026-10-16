@@ -1,3 +1,9 @@
+# HISTORICAL since 2026-10-16: the node-200 aggr-parallax pair. Both
+# Deployments are scaled to 0 and their PVs/PVCs and on-disk data are kept on
+# node 200 until the owner signs off (docs/NODE201_MOVE_2026-10-16.md). The
+# live feed is deploy/node201.yaml, which now also holds the two Services that
+# used to be defined here. Do not scale these back up: the Service
+# aggr-parallax-influx no longer selects them.
 apiVersion: v1
 kind: PersistentVolume
 metadata:
@@ -63,7 +69,7 @@ metadata:
   name: aggr-parallax-influx
   namespace: ai-bot-feeder
 spec:
-  replicas: 1
+  replicas: 0
   strategy: { type: Recreate }
   selector: { matchLabels: { app: aggr-parallax-influx } }
   template:
@@ -96,22 +102,13 @@ spec:
         - name: data
           persistentVolumeClaim: { claimName: aggr-parallax-influx }
 ---
-apiVersion: v1
-kind: Service
-metadata:
-  name: aggr-parallax-influx
-  namespace: ai-bot-feeder
-spec:
-  selector: { app: aggr-parallax-influx }
-  ports: [{ name: influxql, port: 8086, targetPort: influxql }]
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: aggr-server-parallax
   namespace: ai-bot-feeder
 spec:
-  replicas: 1
+  replicas: 0
   strategy: { type: Recreate }
   selector: { matchLabels: { app: aggr-server-parallax } }
   template:
@@ -141,12 +138,3 @@ spec:
       volumes:
         - name: journal
           persistentVolumeClaim: { claimName: aggr-parallax-journal }
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: aggr-server-parallax
-  namespace: ai-bot-feeder
-spec:
-  selector: { app: aggr-server-parallax }
-  ports: [{ name: api, port: 3000, targetPort: api }]

@@ -158,3 +158,23 @@ spec:
       volumes:
         - name: journal
           persistentVolumeClaim: { claimName: aggr-parallax-journal-201 }
+---
+# Shared names used by Snowgraf (datasource aggr-parallax-influxql) and the
+# open-interest CronJob; switched from node 200 on 2026-10-16 15:02:27 UTC.
+apiVersion: v1
+kind: Service
+metadata:
+  name: aggr-parallax-influx
+  namespace: ai-bot-feeder
+spec:
+  selector: { app: aggr-parallax-influx-201 }
+  ports: [{ name: influxql, port: 8086, targetPort: influxql }]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: aggr-server-parallax
+  namespace: ai-bot-feeder
+spec:
+  selector: { app: aggr-server-parallax-201 }
+  ports: [{ name: api, port: 3000, targetPort: api }]
