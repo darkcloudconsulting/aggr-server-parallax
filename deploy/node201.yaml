@@ -2,15 +2,17 @@
 # docs/NODE201_MOVE_2026-10-16.md). Runs beside the node-200 instance until the
 # switch; nothing here touches node 200's objects.
 #
-# Static PVs only (controller CLAUDE.md landmine 1):
-#   InfluxDB: ZFS dataset zfs-201/aggr-influx -> /srv/aggr-201/influx
-#             (refquota 100G) on the rebuilt zfs-201 mirror;
-#   journal:  plain directory /var/lib/aggr-parallax-201/journal on node 201's
-#             OS disk (ext4 on LVM, Crucial P2), owner decision 2026-10-16. The
-#             journal writes about 9 MB/s, the same order that wore the zfs-201
-#             mirror drives, so it stays off them. No quota on ext4: the
-#             journal is pruned to 7 days (about 10 G on node 200 at 4.7x zstd,
-#             about 47 G uncompressed) and the disk has about 800 G free.
+# Static PVs only (controller CLAUDE.md landmine 1), both ZFS datasets on the
+# rebuilt zfs-201 mirror:
+#   zfs-201/aggr-influx   -> /srv/aggr-201/influx   refquota 100G, uid 1500
+#   zfs-201/aggr-journal  -> /srv/aggr-201/journal  refquota 150G, uid 1000,
+#                            recordsize 16K, sync=disabled
+# The journal runs SQLite with synchronous=FULL on Node's event-loop thread, so
+# fsync latency stalls the whole server. On node 201's OS disk (ext4, Crucial
+# P2) fsync took 6.5 ms and the liveness probe killed the server three times in
+# nine minutes (2026-10-16); with sync=disabled it takes about 6 us. Trade-off,
+# owner-approved (option A): a host crash can lose the last few seconds of
+# journal; an application crash loses nothing.
 #
 # The image config says influxHost "aggr-parallax-influx", which is node 200's
 # Service until the switch. INFLUX_HOST overrides it (src/config.js applies
@@ -44,7 +46,7 @@ spec:
   accessModes: [ReadWriteOnce]
   persistentVolumeReclaimPolicy: Retain
   storageClassName: ""
-  local: { path: /var/lib/aggr-parallax-201/journal }
+  local: { path: /srv/aggr-201/journal }
   nodeAffinity:
     required:
       nodeSelectorTerms:
