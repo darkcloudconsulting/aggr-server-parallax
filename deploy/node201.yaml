@@ -137,7 +137,7 @@ spec:
       enableServiceLinks: false
       containers:
         - name: server
-          image: local.parallax/aggr-server@sha256:b03188c24ab5f498f399ea9f82205eb79bae4feece66a6974dc8f6bc581ca95c
+          image: local.parallax/aggr-server@sha256:f1bd12d3e1900d75128f281e7cce28c3b49c00c3914e1c7c7faae72d180ab964
           imagePullPolicy: Never
           env:
             - { name: INFLUX_HOST, value: aggr-parallax-influx-201 }

@@ -1,7 +1,16 @@
 const Exchange = require('../exchange')
+const config = require('../config')
 const { sleep, getHms } = require('../helper')
+const { RequestWeightBudget } = require('../binance-weight')
 const axios = require('axios')
+const { URL } = require('url')
 const WebSocket = require('websocket').w3cwebsocket
+
+// aggTrades costs 20 weight on fapi and dapi; each host has its own per-IP budget,
+// shared by every instance in this process
+const AGG_TRADES_WEIGHT = 20
+const MAX_RATE_LIMIT_RETRIES = 3
+const recoveryBudgets = {}
 
 class BinanceFutures extends Exchange {
   constructor() {
@@ -226,7 +235,7 @@ class BinanceFutures extends Exchange {
         } else {
           params.fromId = fromId
         }
-        const page = (await axios.get(url, { params })).data
+        const page = await this.getRecoveryPage(url, params)
         if (!page.length) break
         const trades = page.filter(trade => trade.T > range.from && trade.T < range.to)
           .map(trade => this.formatTrade(trade, range.pair))
@@ -243,6 +252,49 @@ class BinanceFutures extends Exchange {
     }
     console.log(`[${this.id}.recoverMissingTrades] +${recovered} ${range.pair} (${getHms(range.to - range.from)} remaining)`)
     return recovered
+  }
+
+  recoveryBudget(origin) {
+    if (!recoveryBudgets[origin]) {
+      recoveryBudgets[origin] = new RequestWeightBudget({
+        label: `${this.id}.recoverMissingTrades ${origin}`,
+        cap: config.binanceFuturesRecoveryWeightCap,
+        sleep
+      })
+    }
+    return recoveryBudgets[origin]
+  }
+
+  async getRecoveryPage(url, params) {
+    const { origin, pathname } = new URL(url)
+    const budget = this.recoveryBudget(origin)
+    const timeUrl = `${origin}/${pathname.split('/')[1]}/v1/time`
+    const probe = async () => {
+      try {
+        budget.record((await axios.get(timeUrl, { params: {} })).headers)
+      } catch (error) {
+        if (!budget.backOff(error)) {
+          console.warn(`[${this.id}.recoverMissingTrades] could not read ${origin}'s used weight: ${error.message}`)
+        }
+      }
+    }
+    for (let attempt = 1; ; attempt++) {
+      await budget.reserve(AGG_TRADES_WEIGHT, probe)
+      try {
+        const response = await axios.get(url, { params })
+        budget.record(response.headers)
+        return response.data
+      } catch (error) {
+        if (!budget.backOff(error) || attempt >= MAX_RATE_LIMIT_RETRIES) {
+          throw error
+        }
+      }
+    }
+  }
+
+  // one recovery page per binanceFuturesRecoveryRequestDelay, not every recoveryRequestDelay
+  waitBeforeContinueRecovery(multiplier = 1) {
+    return sleep(config.binanceFuturesRecoveryRequestDelay * multiplier)
   }
 
   openLiquidationApi(api) {

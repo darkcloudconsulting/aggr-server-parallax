@@ -86,6 +86,12 @@ const defaultConfig = {
   // delay between each recovery requests of a same pair (default 250ms)
   recoveryRequestDelay: 250,
 
+  // Binance futures recovery shares the site's per-IP weight budget (2400 a minute) with
+  // the Kafka publishers (src/binance-weight.js): it stops for the minute once the IP has
+  // used this much, and sends at most one page per delay
+  binanceFuturesRecoveryWeightCap: 960,
+  binanceFuturesRecoveryRequestDelay: 1000,
+
   // bypass origin restriction for given ips (comma separated)
   whitelist: [],
 

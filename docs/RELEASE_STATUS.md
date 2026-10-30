@@ -1,6 +1,41 @@
-# Parallax feed release status — current as of 2026-10-16
+# Parallax feed release status — current as of 2026-10-30
 
 Status: **PARALLEL FEED LIVE; 24-HOUR VALIDATION PENDING**.
+
+## 30 October 2026 — Binance futures recovery shares the IP's request weight
+
+**Why.** At 2026-10-30 00:19 UTC Binance closed every futures socket on site. This
+server's connection had been stalled for 30 s, and its trade recovery then fetched
+50,380 aggregate trades in about 51 `/fapi/v1/aggTrades` pages (20 weight each) at the
+250 ms `recoveryRequestDelay`, never reading Binance's used-weight header; the legacy
+`aggr-server-sol` added 5 pages. Binance counts weight per public IP, and every client on
+this site shares one. The IP went from about 300 to 2,366 of 2,400 in 27 s, two Kafka
+publishers were answered HTTP 429 and halted, and Binance futures deep books were lost
+for 7 h 04 min. Record: the operator tree's
+`infra/kafka/INCIDENT_2026-10-30_BINANCE_WEIGHT.md`.
+
+**Change.** Recovery pages now go through `src/binance-weight.js`. Before each page it
+checks the IP's used weight for the current minute (from the last response, or a
+weight-1 `/v1/time` request when it has no reading yet). If the page would take the IP
+past `binanceFuturesRecoveryWeightCap` (960, 40 % of 2,400), it waits for the next
+minute. On 429 it holds every page until `Retry-After` and at least the next minute, then
+retries the page, up to 3 tries. A 418 (ban) is never retried. fapi and dapi have
+separate budgets. Pages are 1 s apart (`binanceFuturesRecoveryRequestDelay`). A long
+blackout in a burst now fills over minutes instead of seconds. Live trades are not
+affected, because recovery runs beside the websocket. Binance spot recovery uses
+`data-api.binance.vision`, which is not on the futures budget, and is unchanged.
+Tests: `test/binance-weight.test.js`, 32 of 32 passing.
+
+**Release.** Image `local.parallax/aggr-server:binance-weight-20261030`
+(`sha256:f1bd12d3e1900d75128f281e7cce28c3b49c00c3914e1c7c7faae72d180ab964`) is
+`journal-prune-20261015` with only `src/binance-weight.js`, `src/config.js` and
+`src/exchanges/binance_futures.js` replaced. Its `/app/src` equals this commit. It
+was imported on node 201 and its digest reference tagged before the rollout. The
+previous reference `b03188c2…` is still on the node, for rollback. Applied 07:37:17 UTC.
+The new pod was Running at 07:37:34, and all 66 feeds reconnected. The restart's own
+Binance futures recovery (6 ranges, 269 trades) went out one page a second. The
+over-cap wait has not been exercised live; the tests cover it.
+
 
 ## 16 October 2026 — moved to node 201
 

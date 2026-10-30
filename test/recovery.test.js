@@ -21,7 +21,8 @@ for (const Exchange of [Binance, BinanceFutures]) {
       T: now + 1, p: '100', q: '1', m: false }))
     const last = [{ a: 1000, f: 1000, l: 1000, T: now + 1, p: '101', q: '1', m: true }]
     const calls = []
-    axios.get = async (_, { params }) => {
+    axios.get = async (url, { params }) => {
+      if (url.endsWith('/v1/time')) return { data: {}, headers: {} }
       calls.push(params)
       return { data: params.fromId === undefined ? first : last }
     }
