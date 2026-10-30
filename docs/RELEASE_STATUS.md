@@ -8,7 +8,8 @@ Status: **PARALLEL FEED LIVE; 24-HOUR VALIDATION PENDING**.
 server's connection had been stalled for 30 s, and its trade recovery then fetched
 50,380 aggregate trades in about 51 `/fapi/v1/aggTrades` pages (20 weight each) at the
 250 ms `recoveryRequestDelay`, never reading Binance's used-weight header; the legacy
-`aggr-server-sol` added 5 pages. Binance counts weight per public IP, and every client on
+`aggr-server-sol` added 5 pages (that legacy server was retired at 08:01 UTC the same day,
+so it no longer draws on the IP's weight). Binance counts weight per public IP, and every client on
 this site shares one. The IP went from about 300 to 2,366 of 2,400 in 27 s, two Kafka
 publishers were answered HTTP 429 and halted, and Binance futures deep books were lost
 for 7 h 04 min. Record: the operator tree's
