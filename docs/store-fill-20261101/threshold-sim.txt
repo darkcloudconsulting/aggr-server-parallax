@@ -1,0 +1,18 @@
+CRYPTOCOM:BTCUSD-PERP      avg    39.1/min thr   60s  would reconnect 22x in 24h
+CRYPTOCOM:BTC_USD          avg    40.3/min thr   60s  would reconnect 11x in 24h
+OKEX:BTC-USD-SWAP          avg    41.2/min thr   60s  would reconnect 10x in 24h
+BINANCE_FUTURES:btcusd_perp avg    38.9/min thr   60s  would reconnect 9x in 24h
+BYBIT:BTCUSD               avg    18.6/min thr   96s  would reconnect 8x in 24h
+BINANCE_FUTURES:ethusd_perp avg    35.3/min thr   60s  would reconnect 7x in 24h
+BYBIT:ETHUSD               avg     7.0/min thr  256s  would reconnect 6x in 24h
+CRYPTOCOM:SOLUSD-PERP      avg    18.9/min thr   95s  would reconnect 5x in 24h
+KRAKEN:PF_ETHUSD           avg    26.9/min thr   66s  would reconnect 4x in 24h
+OKEX:ETH-USD-SWAP          avg    41.5/min thr   60s  would reconnect 3x in 24h
+KRAKEN:PF_XBTUSD           avg    45.4/min thr   60s  would reconnect 3x in 24h
+OKEX:SOL-USD-SWAP          avg     7.4/min thr  243s  would reconnect 2x in 24h
+total reconnects in 24h across 66 markets: 106
+k= 30 expected trades, floor  60s: 106 reconnects/24h | thresholds: BTCUSDT 60s, BTCUSDT-SPOT 60s, BTC 60s, SOL 63s, SOLUSDT-SPOT 60s
+k= 60 expected trades, floor 120s:  15 reconnects/24h | thresholds: BTCUSDT 120s, BTCUSDT-SPOT 120s, BTC 120s, SOL 126s, SOLUSDT-SPOT 120s
+k=120 expected trades, floor 120s:   4 reconnects/24h | thresholds: BTCUSDT 120s, BTCUSDT-SPOT 120s, BTC 120s, SOL 253s, SOLUSDT-SPOT 232s
+k=120 expected trades, floor 180s:   2 reconnects/24h | thresholds: BTCUSDT 180s, BTCUSDT-SPOT 180s, BTC 180s, SOL 253s, SOLUSDT-SPOT 232s
+k=240 expected trades, floor 180s:   0 reconnects/24h | thresholds: BTCUSDT 180s, BTCUSDT-SPOT 180s, BTC 180s, SOL 506s, SOLUSDT-SPOT 465s
