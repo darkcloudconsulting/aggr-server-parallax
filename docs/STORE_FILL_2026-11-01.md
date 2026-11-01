@@ -53,30 +53,32 @@ KuCoin, Bitstamp, Bitfinex, Crypto.com, OKX inverse; anything before 10-14. **Th
 markers were not cleared.** The journal is the live server's SQLite and has no endpoint for it; they now
 over-report the gaps in the filled markets.
 
-## The fix for the cause: proposed, not applied
+## The fix for the cause: built, not deployed
 
-`reconnectionThreshold` takes a formula of the market's own trade rate (`connection.avg`, trades a
-minute). Proposed:
+**First proposal withdrawn.** A rate-based `reconnectionThreshold` of 120 expected trades (floor 2 min) replayed to about 4
+reconnects a day over 24 h ([`threshold-sim.txt`](store-fill-20261101/threshold-sim.txt)). The owner asked about quiet
+times. The server's `connection.avg` is the average since the connection started, not the current rate, so at quiet
+times it overstates the rate and shortens the threshold. Replayed that way over the quietest stretch of the fortnight
+(10-31 00:00 → 11-01 09:30, a Saturday and Sunday morning), the same rule reconnected **20 times in 33.5 hours**, mostly
+Crypto.com, Binance inverse and Bybit inverse ([`quiet-sim.txt`](store-fill-20261101/quiet-sim.txt), [`quiet.py`](store-fill-20261101/quiet.py)).
+
+**1. Silence watchdog on venues that ping (code, `src/exchange.js` `startKeepAlive`).** Bitget, Bybit, Hyperliquid and
+KuCoin send an application ping every 18–30 s and the venue answers. A healthy socket therefore receives frames however
+quiet the market. Every socket now records its last frame of any kind. If none, pongs included, has arrived for
+`max(60 s, 2 × ping interval + 10 s)`, the server reconnects it through `reconnectApi` ("no frame for … (pings
+unanswered)"). Config `keepAliveSilenceThreshold`: -1 (default) is that rule, 0 turns it off, any other value is in ms.
+Quiet markets cannot trigger it. On 10-30 it would have caught the three silent venues within 60–70 s instead of
+7–11 min. Tests: `test/keepalive.test.js` (a silent socket is reconnected once; a socket still answering pings is left
+alone). `npm test` 34/34.
+
+**2. Conservative backstop for venues without pings** (OKX, Binance, Binance futures, Coinbase, Kraken, Crypto.com,
+Bitstamp, Bitfinex): silence of 480 expected trades, at least 5 minutes, at most the current hour. **0 reconnects** in
+the quiet replay; liquid markets are detected after 5–6 minutes instead of 60. None of these venues went silent on 10-30.
 
 ```
-RECONNECTION_THRESHOLD='Math.min(3600000, Math.max(120000, 7200000 / Math.max(connection.avg, 0.5)))'
+RECONNECTION_THRESHOLD='Math.min(3600000, Math.max(300000, 28800000 / Math.max(connection.avg, 0.5)))'
 ```
 
-That is, silence of 120 expected trades, at least 2 minutes and at most the current hour. Replayed over
-the last 24 h of 10s bars for all 66 markets ([`threshold-sim.txt`](store-fill-20261101/threshold-sim.txt)):
-about 4 reconnects a day, mostly in bursty inverse contracts, against 106 for a 30-trade/60 s rule. BTC on
-Bitget, Bybit spot and Hyperliquid would be detected after 2 minutes plus up to one 60 s monitor tick,
-instead of 7–11 minutes. A reconnect resets every market on that socket and triggers a short REST
-recovery; Binance futures recovery is already budgeted against the shared IP weight.
-
-It needs no image: `src/config.js` maps the env var onto `reconnectionThreshold` (the image runs with
-`RUNNING_IN_DOCKER`; `INFLUX_HOST` uses the same path). **Applying it restarts the collector pod**, which
-the owner approves first (controller rule: collector changes lose live data). Apply:
-
-```
-kubectl -n ai-bot-feeder set env deploy/aggr-server-parallax-201 \
-  RECONNECTION_THRESHOLD='Math.min(3600000, Math.max(120000, 7200000 / Math.max(connection.avg, 0.5)))'
-```
-
-Then record it in `deploy/node201.yaml`, and check the log for `overriding 'reconnectionThreshold'` and,
-on the next silence, `reconnection threshold reached` instead of a late ECONNRESET.
+**Deploying** needs a new image (item 1), the env (item 2) and a restart of the collector pod. The owner approves that
+first (controller rule: collector changes lose live data; a restart is a few seconds, which startup recovery fills from
+REST). Then check the log for `overriding 'reconnectionThreshold'` and record both in `deploy/node201.yaml`.

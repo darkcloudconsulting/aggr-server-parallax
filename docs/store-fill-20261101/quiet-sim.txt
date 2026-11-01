@@ -1,0 +1,8 @@
+k=120 floor 120s:  20 reconnects in 33.5 quiet hours  by venue {'CRYPTOCOM': 7, 'BINANCE_FUTURES': 5, 'BYBIT': 5, 'HYPERLIQUID': 2, 'OKEX': 1, 'BINANCE': 0}
+      thresholds {'BITGET:BTCUSDT': 120, 'BYBIT:BTCUSDT-SPOT': 120, 'HYPERLIQUID:BTC': 120, 'BINANCE:btcusdt': 120}
+k=240 floor 180s:   2 reconnects in 33.5 quiet hours  by venue {'BINANCE_FUTURES': 1, 'CRYPTOCOM': 1, 'BINANCE': 0, 'BITFINEX': 0, 'BITGET': 0, 'BITSTAMP': 0}
+      thresholds {'BITGET:BTCUSDT': 180, 'BYBIT:BTCUSDT-SPOT': 180, 'HYPERLIQUID:BTC': 180, 'BINANCE:btcusdt': 180}
+k=480 floor 300s:   0 reconnects in 33.5 quiet hours  by venue {'BINANCE': 0, 'BINANCE_FUTURES': 0, 'BITFINEX': 0, 'BITGET': 0, 'BITSTAMP': 0, 'BYBIT': 0}
+      thresholds {'BITGET:BTCUSDT': 300, 'BYBIT:BTCUSDT-SPOT': 300, 'HYPERLIQUID:BTC': 300, 'BINANCE:btcusdt': 300}
+k=900 floor 300s:   0 reconnects in 33.5 quiet hours  by venue {'BINANCE': 0, 'BINANCE_FUTURES': 0, 'BITFINEX': 0, 'BITGET': 0, 'BITSTAMP': 0, 'BYBIT': 0}
+      thresholds {'BITGET:BTCUSDT': 300, 'BYBIT:BTCUSDT-SPOT': 300, 'HYPERLIQUID:BTC': 326, 'BINANCE:btcusdt': 300}

@@ -83,6 +83,10 @@ const defaultConfig = {
   // for 1000 hit/min = 17m, 21s
   reconnectionThreshold: 3600000,
 
+  // on venues that ping (startKeepAlive), reconnect a socket that has received no frame at all, pongs
+  // included, for this long. -1 (default) = max(60s, 2 pings + 10s); 0 = off
+  keepAliveSilenceThreshold: -1,
+
   // delay between each recovery requests of a same pair (default 250ms)
   recoveryRequestDelay: 250,
 

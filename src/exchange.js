@@ -240,6 +240,7 @@ class Exchange extends EventEmitter {
 
     api._connected = []
     api._pending = []
+    api._lastFrameAt = Date.now()
 
     this.apis.push(api)
 
@@ -265,6 +266,7 @@ class Exchange extends EventEmitter {
     }
 
     api.onmessage = event => {
+      api._lastFrameAt = Date.now()
       try {
         const wasBadData = !this.onMessage(event, api)
 
@@ -966,7 +968,22 @@ class Exchange extends EventEmitter {
 
     console.debug(`[${this.id}] setup keepalive for ws ${api.url} (${api.id})`)
 
+    // A socket can stay open with nothing arriving (half-open: 2026-10-30 15:09, Bitget, Bybit spot and
+    // Hyperliquid were silent 7-11 minutes until the kernel reset them). The venue answers every ping, so
+    // a socket that has received no frame at all, pongs included, for two intervals is dead, however
+    // quiet the market (docs/STORE_FILL_2026-11-01.md).
+    const silenceLimit = config.keepAliveSilenceThreshold >= 0
+      ? Number(config.keepAliveSilenceThreshold)
+      : Math.max(60000, every * 2 + 10000)
+
     this.keepAliveIntervals[api.id] = setInterval(() => {
+      const silentFor = Date.now() - api._lastFrameAt
+      if (silenceLimit > 0 && api.readyState === WebSocket.OPEN && silentFor > silenceLimit) {
+        this.stopKeepAlive(api)
+        this.reconnectApi(api, `no frame for ${getHms(silentFor)} (pings unanswered)`)
+        return
+      }
+
       if (api.readyState === WebSocket.OPEN) {
         const message = typeof payload === 'function'
           ? JSON.stringify(payload())
